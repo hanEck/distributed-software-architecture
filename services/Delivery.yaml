@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: Delivery
+  description: |
+    Ensures that all ordered items are delivered to the guest and that they are registered for billing.
+  version: 1.0.0
+paths:
+  /deliveryInformation:
+    post:
+      summary: Forward information about delivery and drinks
+      description: |
+        The order information received from the guest is forwarded to the 
+        assistance manager. This information summarizes a delivery
+        that is to be brought to the guest.
+      requestBody:
+        required: true
+        content: 
+          application/json:
+            schema:
+              $ref: "#/components/schemas/deliveryAndDrinksInformation" 
+            examples:
+                DeliveryAndDrinksInformationForThreePeople:
+                  summary: Information about food & drinks for three persons
+                  value:
+                    {
+                      "guest": 2,
+                      "food" : [
+                            1,
+                            2,
+                            1
+                      ],
+                       "drink": [
+                            1,
+                            2,
+                            2
+                      ] 
+                    }  
+      responses:
+        "200":
+          description: Delivery and drinks information has been forwarded successfully
+          content:
+            application/json: 
+              schema:
+                $ref: "#/components/schemas/forwardingDeliveryInformationConfirmation"    
+ 
+components:
+  schemas:
+    identifier:
+      type: integer
+      minimum: 0
+    identifiers:
+      type: array
+      items: 
+        $ref: "#/components/schemas/identifier" 
+    deliveryAndDrinksInformation:
+      type: object
+      properties:
+        guest:
+          $ref: "#/components/schemas/identifier"
+        food:
+          $ref: "#/components/schemas/identifiers"
+        drinks:
+          $ref: "#/components/schemas/identifiers"
+    forwardingDeliveryInformationConfirmation:
+      type: object
+      properties:
+        deliveryAndDrinksInformation:
+          description: Delivery Information for Guest 
+          $ref: "#/components/schemas/identifier" 
