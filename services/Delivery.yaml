@@ -41,8 +41,34 @@ paths:
           content:
             application/json: 
               schema:
-                $ref: "#/components/schemas/forwardingDeliveryInformationConfirmation"    
- 
+                $ref: "#/components/schemas/forwardingDeliveryInformationConfirmation"   
+  /preparedNotification:
+    post:
+      summary: Send notification to assistant manager
+      description: |
+        When a food is prepared the assistant manager can ve informed
+        via this endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/preparedNotification"
+            examples:
+              MealPreparedNotifcation:
+                summary: Notification about a specific meal for a specific guest which is prepared
+                value:
+                  {
+                    "guest": 2,
+                    "food" : 1
+                  }  
+      responses:
+        "200":
+          description: Notification has been successfull
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/preparedNotificationConfirmation"
 components:
   schemas:
     identifier:
@@ -66,4 +92,17 @@ components:
       properties:
         deliveryAndDrinksInformation:
           description: Delivery Information for Guest 
+          $ref: "#/components/schemas/identifier" 
+    preparedNotification:
+      type: object
+      properties:
+        guest: 
+          $ref: "#/components/schemas/identifier" 
+        meal:
+          $ref: "#/components/schemas/identifier" 
+    preparedNotificationConfirmation:
+      type: object
+      properties:
+        preparedNotification: 
+          description: Notification success
           $ref: "#/components/schemas/identifier" 
