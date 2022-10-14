@@ -43,6 +43,21 @@ interface DeliveryAndDrinksInformation {
 let information: DeliveryAndDrinksInformation;
 app.post("/deliveryInformation", (req, res) => {
     information = req.body;
+
+    //Creating the url based on post input
+    const originUrl = "http://localhost:5000";
+    const urlParams = {
+        guest: information.guest,
+        order: '1'
+    }
+    const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.order}`)
+
+     fetch(url.href, {
+        method: 'POST',
+        body: JSON.stringify(information),
+        headers: {'Content-Type': 'application/json'}
+    })
+
     res.send({ message: "Information was send successfully!" })
 })
 
@@ -55,8 +70,6 @@ const preparedFood: PreparedFood= req.body;
 res.send({ message: "Notification was send successfully!" })
 console.log(preparedFood);
 })
-
-
 
 
 app.listen(port, () => {
