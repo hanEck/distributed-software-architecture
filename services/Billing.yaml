@@ -1,304 +1,304 @@
 openapi: 3.0.3
 info:
-  title: Billing
-  description: |
-    Keeps track of ordered items in the restaurant and offers a guest a possibility to pay their bills with different payment methods.
-  version: 1.0.0
+    title: Billing
+    description: |
+        Keeps track of ordered items in the restaurant and offers a guest a possibility to pay their bills with different payment methods.
+    version: 1.0.0
 paths:
-  /bills/{guest}:
-    post:
-      parameters:
-        - name: guest
-          description: Identifier of a guest in the restaurant
-          in: path
-          required: true
-          schema:
-            $ref: "#/components/schemas/identifier"
-      summary: Generates the bill for a guest with all unpaid but delivered items
-      operationId: generate-bill
-      description: |
-        Returns the delivered items of the customer together with a total sum as part of the bill.
-        Note: bill and orders don't need to fully match, e.g. you can have 3 orders with different food and drink items paid by two separate bills.
-      responses:
-        "200":
-          description: A new bill was generated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/bill"
-              examples:
-                SingleOrder:
-                  summary: A bill containing all items from orders of the guest
-                  value:
-                    {
-                      "bill": 1,
-                      "orderedFood": [
-                          1
-                      ],
-                      "orderedDrinks": [
-                          2
-                      ],
-                      "totalSum": 65.8
-                    }
-        "202":
-          description: A bill was open and it was updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/bill"
-              examples:
-                SingleOrder:
-                  summary: A bill containing all items from orders of the guest
-                  value:
-                    {
-                      "bill": 1,
-                      "orderedFood": [
-                          1
-                      ],
-                      "orderedDrinks": [
-                          2
-                      ],
-                      "totalSum": 65.8
-                    }
-        "404":
-          description: No unpaid, billable items for the guest
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: No billable items found
-  /payment/{bill}:
-    parameters:
-      - name: bill
-        description: Identifier of a bill
-        in: path
-        required: true
-        schema:
-          $ref: "#/components/schemas/identifier"
-    get:
-      summary: Returns the payment options for this bill
-      description: |
-        Depending on the amount of the bill different payment options may be offered
-      responses:
-        "200":
-          description: Describes the supported payment options
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/paymentOptions"
-              examples:
-                OnePaymentOption:
-                  summary: A single payment option for the bill
-                  value:
-                    [ "Cash" ]
-                MultiplePaymentOption:
-                  summary: More payment option for the bill
-                  value:
-                    [ "Cash", "DebitCard" ]
-    post:
-      summary: Pays the bill
-      description: |
-        Marks the bill as paid
-      requestBody:
-        required: true
-        content:
-          application/json:
+    /bills/{guest}:
+        post:
+            parameters:
+            -   name: guest
+                description: Identifier of a guest in the restaurant
+                in: path
+                required: true
+                schema:
+                    $ref: "#/components/schemas/identifier"
+            summary: Generates the bill for a guest with all unpaid but delivered items
+            operationId: generate-bill
+            description: |
+                Returns the delivered items of the customer together with a total sum as part of the bill.
+                Note: bill and orders don't need to fully match, e.g. you can have 3 orders with different food and drink items paid by two separate bills.
+            responses:
+                "200":
+                    description: A new bill was generated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/bill"
+                            examples:
+                                SingleOrder:
+                                    summary: A bill containing all items from orders of the guest
+                                    value:
+                                      {
+                                          "bill": 1,
+                                          "orderedFood": [
+                                                  1
+                                          ],
+                                          "orderedDrinks": [
+                                                  2
+                                          ],
+                                          "totalSum": 65.8
+                                      }
+                "202":
+                    description: A bill was open and it was updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/bill"
+                            examples:
+                                SingleOrder:
+                                    summary: A bill containing all items from orders of the guest
+                                    value:
+                                      {
+                                          "bill": 1,
+                                          "orderedFood": [
+                                                  1
+                                          ],
+                                          "orderedDrinks": [
+                                                  2
+                                          ],
+                                          "totalSum": 65.8
+                                      }
+                "404":
+                    description: No unpaid, billable items for the guest
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: No billable items found
+    /payment/{bill}:
+        parameters:
+        -   name: bill
+            description: Identifier of a bill
+            in: path
+            required: true
             schema:
-              $ref: "#/components/schemas/billPayment"
-            examples:
-              PayWithCash:
-                summary: Pays the bill with cash and tips
-                value:
-                  {
-                    "amount": 70.0,
-                    "paymentMethod": "Cash"
-                  }
-      responses:
-        "202":
-          description: Payment was accepted for this bill
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/paidBill"
-              examples:
-                PaidTwoBills:
-                  summary: Two orders have been paid by this bill
-                  value:
-                    {
-                      "bill": 1,
-                      "paidOrders": [
-                        {
-                          "order": 1,
-                          "paidFood": [ 1 ],
-                          "paidDrinks": [ ]
-                        }
-                      ],
-                      "totalSum": 65.8
-                    }
-        "406":
-          description: The payment method was not accepted and a supported one should be chosen
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: Please use a supported payment method for this bill
-        "416":
-          description: The transferred amount was not sufficient
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: Please pay at least 123.45 euros for this bill
-        "410":
-          description: The bill is not open and was either paid or cancelled
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: No payment for the bill required
-  /registerDelivery:
-    post:
-      summary: Registers items as delivered, when they are delivered to a guest
-      operationId: register-items
-      description: |
-        Registers all items in the body as delivered to a specific guest
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/itemRegistration"
-            examples:
-              RegisterTwoItems:
-                summary: Registers items, which are delivered to a guest
-                value:
-                  {
-                    "guest": 3,
-                    "food": [ 2, 5, 8, 1 ],
-                    "drinks": [ 1, 3, 9, 12 ]
-                  }
-      responses:
-        "200":
-          description: Items were registered successfully
-        "400":
-          description: No guest was specified in the request body
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: No guest id was specified
-        "404":
-          description: The specified guest was not found
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: Guest does not exist
-        "416":
-          description: No items were specified for registration
-          content:
-            text/html:
-              schema:
-                $ref: "#/components/schemas/errorMessage"
-              example: No items were passed for registration
+                $ref: "#/components/schemas/identifier"
+        get:
+            summary: Returns the payment options for this bill
+            description: |
+                Depending on the amount of the bill different payment options may be offered
+            responses:
+                "200":
+                    description: Describes the supported payment options
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/paymentOptions"
+                            examples:
+                                OnePaymentOption:
+                                    summary: A single payment option for the bill
+                                    value:
+                                      [ "Cash" ]
+                                MultiplePaymentOption:
+                                    summary: More payment option for the bill
+                                    value:
+                                      [ "Cash", "DebitCard" ]
+        post:
+            summary: Pays the bill
+            description: |
+                Marks the bill as paid
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/billPayment"
+                        examples:
+                            PayWithCash:
+                                summary: Pays the bill with cash and tips
+                                value:
+                                  {
+                                      "amount": 70.0,
+                                      "paymentMethod": "Cash"
+                                  }
+            responses:
+                "202":
+                    description: Payment was accepted for this bill
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/paidBill"
+                            examples:
+                                PaidTwoBills:
+                                    summary: Two orders have been paid by this bill
+                                    value:
+                                      {
+                                          "bill": 1,
+                                          "paidOrders": [
+                                              {
+                                                  "order": 1,
+                                                  "paidFood": [ 1 ],
+                                                  "paidDrinks": [ ]
+                                              }
+                                          ],
+                                          "totalSum": 65.8
+                                      }
+                "406":
+                    description: The payment method was not accepted and a supported one should be chosen
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: Please use a supported payment method for this bill
+                "416":
+                    description: The transferred amount was not sufficient
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: Please pay at least 123.45 euros for this bill
+                "410":
+                    description: The bill is not open and was either paid or cancelled
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: No payment for the bill required
+    /registerDelivery:
+        post:
+            summary: Registers items as delivered, when they are delivered to a guest
+            operationId: register-items
+            description: |
+                Registers all items in the body as delivered to a specific guest
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/itemRegistration"
+                        examples:
+                            RegisterTwoItems:
+                                summary: Registers items, which are delivered to a guest
+                                value:
+                                  {
+                                      "guest": 3,
+                                      "food": [ 2, 5, 8, 1 ],
+                                      "drinks": [ 1, 3, 9, 12 ]
+                                  }
+            responses:
+                "200":
+                    description: Items were registered successfully
+                "400":
+                    description: No guest was specified in the request body
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: No guest id was specified
+                "404":
+                    description: The specified guest was not found
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: Guest does not exist
+                "416":
+                    description: No items were specified for registration
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: No items were passed for registration
 
 
 
 components:
-  schemas:
-    errorMessage:
-      type: string
-      maxLength: 256
-      description: A text message describing an error
-    identifier:
-      type: integer
-      minimum: 0
-      example: 1
-    identifiers:
-      type: array
-      items:
-        $ref: "#/components/schemas/identifier"
-    money:
-      type: number
-      description: Euros
-      minimum: 0
-      example: 10.0
-    paymentMethod:
-      type: string
-      description: Available payment method in the restaurant
-      enum: [ "Cash", "DebitCard", "CreditCard" ]
-      example: "Cash"
-    paidOrder:
-      description: Contains items of an order that have been paid
-      type: object
-      properties:
-        order:
-          $ref: "#/components/schemas/identifier"
-        paidDrinks:
-          type: array
-          items:
-            $ref: "#/components/schemas/identifier"
-        paidFood:
-          type: array
-          items:
-            $ref: "#/components/schemas/identifier"
-    bill:
-      type: object
-      properties:
-        bill:
-          $ref: "#/components/schemas/identifier"
-        orderedDrinks:
-          type: array
-          items:
-            $ref: "#/components/schemas/identifier"
-        orderedFood:
-          type: array
-          items:
-            $ref: "#/components/schemas/identifier"
-        totalSum:
-          description: Contains the total amount of ordered items
-          $ref: "#/components/schemas/money"
-    paymentOptions:
-      type: array
-      description: Supported payment options
-      items:
-        minimum: 1
-        $ref: "#/components/schemas/paymentMethod"
-    paidBill:
-      type: object
-      properties:
-        bill:
-          $ref: "#/components/schemas/identifier"
-        paidOrders:
-          description: Lists the orders and items that have been paid by this bill
-          type: array
-          items:
-            minimum: 1
-            $ref: "#/components/schemas/paidOrder"
-    billPayment:
-      type: object
-      properties:
-        amount:
-          description: Contains the total amount for the payment, including tips
-          $ref: "#/components/schemas/money"
+    schemas:
+        errorMessage:
+            type: string
+            maxLength: 256
+            description: A text message describing an error
+        identifier:
+            type: integer
+            minimum: 0
+            example: 1
+        identifiers:
+            type: array
+            items:
+                $ref: "#/components/schemas/identifier"
+        money:
+            type: number
+            description: Euros
+            minimum: 0
+            example: 10.0
         paymentMethod:
-          description: the chosen payment method
-          $ref: "#/components/schemas/paymentMethod"
-    itemRegistration:
-      type: object
-      properties:
-        guest:
-          description: Identifier of a guest in the restaurant
-          $ref: "#/components/schemas/identifier"
-        food:
-          description: Lists all Ids of the delivered food items
-          type: array
-          items:
-            minimum: 1
-            $ref: "#/components/schemas/identifier"
-        drinks:
-          description: Lists all Ids of the delivered drink items
-          type: array
-          items:
-            minimum: 1
-            $ref: "#/components/schemas/identifier"
+            type: string
+            description: Available payment method in the restaurant
+            enum: [ "Cash", "DebitCard", "CreditCard" ]
+            example: "Cash"
+        paidOrder:
+            description: Contains items of an order that have been paid
+            type: object
+            properties:
+                order:
+                    $ref: "#/components/schemas/identifier"
+                paidDrinks:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/identifier"
+                paidFood:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/identifier"
+        bill:
+            type: object
+            properties:
+                bill:
+                    $ref: "#/components/schemas/identifier"
+                orderedDrinks:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/identifier"
+                orderedFood:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/identifier"
+                totalSum:
+                    description: Contains the total amount of ordered items
+                    $ref: "#/components/schemas/money"
+        paymentOptions:
+            type: array
+            description: Supported payment options
+            items:
+                minimum: 1
+                $ref: "#/components/schemas/paymentMethod"
+        paidBill:
+            type: object
+            properties:
+                bill:
+                    $ref: "#/components/schemas/identifier"
+                paidOrders:
+                    description: Lists the orders and items that have been paid by this bill
+                    type: array
+                    items:
+                        minimum: 1
+                        $ref: "#/components/schemas/paidOrder"
+        billPayment:
+            type: object
+            properties:
+                amount:
+                    description: Contains the total amount for the payment, including tips
+                    $ref: "#/components/schemas/money"
+                paymentMethod:
+                    description: the chosen payment method
+                    $ref: "#/components/schemas/paymentMethod"
+        itemRegistration:
+            type: object
+            properties:
+                guest:
+                    description: Identifier of a guest in the restaurant
+                    $ref: "#/components/schemas/identifier"
+                food:
+                    description: Lists all Ids of the delivered food items
+                    type: array
+                    items:
+                        minimum: 1
+                        $ref: "#/components/schemas/identifier"
+                drinks:
+                    description: Lists all Ids of the delivered drink items
+                    type: array
+                    items:
+                        minimum: 1
+                        $ref: "#/components/schemas/identifier"
