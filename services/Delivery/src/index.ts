@@ -36,44 +36,47 @@ app.get<any, OutgoingRequestResponse, OutgoingRequestRequestBody>("/outgoingRequ
 //////////////////////////////////////Template Code/////////////////////////////////////////////////////////////
 
 //////////////////////////////////////deliveryInformation endpoint//////////////////////////////////////////////
-interface GuestDelivery {
+interface GuestWithDeliveries {
     guest: number,
     deliveries: Delivery[]
 }
+interface GuestWithDelivery {
+    guest: number,
+    delivery: Delivery
+}
+
 interface Delivery {
     delivery: number,
     food: number[],
-    drink: number[]
+    drinks: number[]
 }
 interface DeliveryAndDrinksInformation {
     guest: number;
     food: number[];
-    drink: number[];
+    drinks: number[];
 }
 
+const guestDeliveries: GuestWithDeliveries[] = [];
 
-const guestDeliveries: GuestDelivery[] = [];
-
-let information: DeliveryAndDrinksInformation;
 app.post("/deliveryInformation", (req, res) => {
-    const receivedInformation = req.body;
-    const guestDelivery: GuestDelivery = createNewGuestWithDelivery(receivedInformation);
+    const receivedInformation: DeliveryAndDrinksInformation = req.body;
+    const guestDelivery: GuestWithDelivery = addDelivery(receivedInformation);
 
     //TODO: Change this URL, when deploying it
     const originUrl = "http://localhost:5000";
     const urlParams = {
         guest: guestDelivery.guest,
-        delivery: guestDelivery.deliveries[0].delivery
+        delivery: guestDelivery.delivery
     }
 
     const drinksDelivery = {
         guest: guestDelivery.guest,
         food: [] as number[],
-        drinks: guestDelivery.deliveries[0].drink
+        drinks: guestDelivery.delivery.drinks
     }
     const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.delivery}`)
 
-    fetch(url.href, {
+    fetch("https://webhook.site/232c4d8e-6f3a-438c-898e-65d1821b41f0", {
         method: 'POST',
         body: JSON.stringify(drinksDelivery),
         headers: { 'Content-Type': 'application/json' }
@@ -84,44 +87,44 @@ app.post("/deliveryInformation", (req, res) => {
 //TODO: This double find method on array can be simpliefied, by handing an method into the find method
 //See the prime number example in the find() Documentation https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find?retiredLocale=de
 
-function addDelivery(deliveryInformation: DeliveryAndDrinksInformation) {
-    let addedDelivery: GuestDelivery;
+function addDelivery(deliveryInformation: DeliveryAndDrinksInformation): GuestWithDelivery {
+    let addedDelivery: GuestWithDelivery;
     if (guestDeliveries.find(order => order.guest === deliveryInformation.guest)) {
         addedDelivery = addDeliveryToGuest(deliveryInformation)
     }
     else {
         addedDelivery = createNewGuestWithDelivery(deliveryInformation);
     }
+    return addedDelivery;
 }
 
-function createNewGuestWithDelivery(deliveryInformation: DeliveryAndDrinksInformation) {
-    const guestDelivery: GuestDelivery = {
+function createNewGuestWithDelivery(deliveryInformation: DeliveryAndDrinksInformation): GuestWithDelivery {
+    const guestDelivery: GuestWithDeliveries = {
         guest: deliveryInformation.guest,
         deliveries: [{
             delivery: 1,
             food: deliveryInformation.food,
-            drink: deliveryInformation.drink
+            drinks: deliveryInformation.drinks
         }]
     }
     guestDeliveries.push(guestDelivery);
-    return guestDelivery;
+    return { guest: guestDelivery.guest, delivery: guestDelivery.deliveries[0] };
 }
 
-//BUG:This does not work right now, because the whole array is expected and not a single Item
-function addDeliveryToGuest(deliveryInformation: DeliveryAndDrinksInformation) {
+function addDeliveryToGuest(deliveryInformation: DeliveryAndDrinksInformation): GuestWithDelivery {
     let deliveryItem;
     guestDeliveries.forEach((element) => {
         if (element.guest === deliveryInformation.guest) {
             deliveryItem = {
                 delivery: +element.deliveries.length,
                 food: deliveryInformation.food,
-                drink: deliveryInformation.drink
+                drinks: deliveryInformation.drinks
             }
             element.deliveries.push(deliveryItem);
         }
     }
     )
-    return { guest: deliveryInformation.guest, deliverydeliveryItem };
+    return { guest: deliveryInformation.guest, delivery: deliveryItem };
 }
 //////////////////////////////////////deliveryInformation endpoint//////////////////////////////////////////////
 
