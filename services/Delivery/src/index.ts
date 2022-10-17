@@ -35,98 +35,107 @@ app.get<any, OutgoingRequestResponse, OutgoingRequestRequestBody>("/outgoingRequ
 });
 //////////////////////////////////////Template Code/////////////////////////////////////////////////////////////
 
-//////////////////////////////////////deliveryInformation endpoint//////////////////////////////////////////////
-interface GuestWithDeliveries {
+//////////////////////////////////////OrderInformation endpoint//////////////////////////////////////////////
+
+//TODO:The relationship of orders and deliveries must be rethought
+//Can one order have multiple Orders? => e.g. drink Order + first food + second food
+//Furthermore it needs to be defined if it makes sense to save the orders (instead of deliveries) or both?
+//Right now orders and deliveries are used as synonyms (a Order turns into an order when a part is send)
+
+//TODO:Reconstruct the structure of the App, regarding to turningOrder into order
+
+interface GuestWithOrders {
     guest: number,
-    deliveries: Delivery[]
+    orders: Order[]
 }
-interface GuestWithDelivery {
+interface GuestWithOrder {
     guest: number,
-    delivery: Delivery
+    Order: Order
 }
 
-interface Delivery {
-    delivery: number,
+interface Order {
+    Order: number,
     food: number[],
     drinks: number[]
 }
-interface DeliveryAndDrinksInformation {
+interface OrderAndDrinksInformation {
     guest: number;
     food: number[];
     drinks: number[];
 }
 
-const guestDeliveries: GuestWithDeliveries[] = [];
+const guestOrders: GuestWithOrders[] = [];
 
-app.post("/deliveryInformation", (req, res) => {
-    const receivedInformation: DeliveryAndDrinksInformation = req.body;
-    const guestDelivery: GuestWithDelivery = addDelivery(receivedInformation);
+app.post("/orderInformation", (req, res) => {
+    const receivedInformation: OrderAndDrinksInformation = req.body;
+    const guestOrder: GuestWithOrder = addOrder(receivedInformation);
 
     //TODO: Change this URL, when deploying it
     const originUrl = "http://localhost:5000";
     const urlParams = {
-        guest: guestDelivery.guest,
-        delivery: guestDelivery.delivery
+        guest: guestOrder.guest,
+        Order: guestOrder.Order
     }
 
-    const drinksDelivery = {
-        guest: guestDelivery.guest,
+    const drinksOrder = {
+        guest: guestOrder.guest,
         food: [] as number[],
-        drinks: guestDelivery.delivery.drinks
+        drinks: guestOrder.Order.drinks
     }
-    const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.delivery}`)
+    const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.Order}`)
 
     fetch("https://webhook.site/232c4d8e-6f3a-438c-898e-65d1821b41f0", {
         method: 'POST',
-        body: JSON.stringify(drinksDelivery),
+        body: JSON.stringify(drinksOrder),
         headers: { 'Content-Type': 'application/json' }
     })
     res.send({ message: "Information was send successfully!" })
+    console.log(guestOrders);
 })
 
 //TODO: This double find method on array can be simpliefied, by handing an method into the find method
 //See the prime number example in the find() Documentation https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find?retiredLocale=de
 
-function addDelivery(deliveryInformation: DeliveryAndDrinksInformation): GuestWithDelivery {
-    let addedDelivery: GuestWithDelivery;
-    if (guestDeliveries.find(order => order.guest === deliveryInformation.guest)) {
-        addedDelivery = addDeliveryToGuest(deliveryInformation)
+function addOrder(OrderInformation: OrderAndDrinksInformation): GuestWithOrder {
+    let addedOrder: GuestWithOrder;
+    if (guestOrders.find(order => order.guest === OrderInformation.guest)) {
+        addedOrder = addOrderToGuest(OrderInformation)
     }
     else {
-        addedDelivery = createNewGuestWithDelivery(deliveryInformation);
+        addedOrder = createNewGuestWithOrder(OrderInformation);
     }
-    return addedDelivery;
+    return addedOrder;
 }
 
-function createNewGuestWithDelivery(deliveryInformation: DeliveryAndDrinksInformation): GuestWithDelivery {
-    const guestDelivery: GuestWithDeliveries = {
-        guest: deliveryInformation.guest,
-        deliveries: [{
-            delivery: 1,
-            food: deliveryInformation.food,
-            drinks: deliveryInformation.drinks
+function createNewGuestWithOrder(OrderInformation: OrderAndDrinksInformation): GuestWithOrder {
+    const guestOrder: GuestWithOrders = {
+        guest: OrderInformation.guest,
+        orders: [{
+            Order: 1,
+            food: OrderInformation.food,
+            drinks: OrderInformation.drinks
         }]
     }
-    guestDeliveries.push(guestDelivery);
-    return { guest: guestDelivery.guest, delivery: guestDelivery.deliveries[0] };
+    guestOrders.push(guestOrder);
+    return { guest: guestOrder.guest, Order: guestOrder.orders[0] };
 }
 
-function addDeliveryToGuest(deliveryInformation: DeliveryAndDrinksInformation): GuestWithDelivery {
-    let deliveryItem;
-    guestDeliveries.forEach((element) => {
-        if (element.guest === deliveryInformation.guest) {
-            deliveryItem = {
-                delivery: +element.deliveries.length,
-                food: deliveryInformation.food,
-                drinks: deliveryInformation.drinks
+function addOrderToGuest(OrderInformation: OrderAndDrinksInformation): GuestWithOrder {
+    let OrderItem;
+    guestOrders.forEach((element) => {
+        if (element.guest === OrderInformation.guest) {
+            OrderItem = {
+                Order: +element.orders.length,
+                food: OrderInformation.food,
+                drinks: OrderInformation.drinks
             }
-            element.deliveries.push(deliveryItem);
+            element.orders.push(OrderItem);
         }
     }
     )
-    return { guest: deliveryInformation.guest, delivery: deliveryItem };
+    return { guest: OrderInformation.guest, Order: OrderItem };
 }
-//////////////////////////////////////deliveryInformation endpoint//////////////////////////////////////////////
+//////////////////////////////////////OrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 interface PreparedFood {
@@ -137,6 +146,8 @@ app.post("/preparedNotification", (req, res) => {
     const preparedFood: PreparedFood = req.body;
     res.send({ message: "Notification was send successfully!" })
     console.log(preparedFood);
+
+    //if a meal is prepared, take it and send it to the customer
 })
 
 

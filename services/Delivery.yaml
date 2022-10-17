@@ -5,31 +5,31 @@ info:
     Ensures that all ordered items are delivered to the guest and that they are registered for billing.
   version: 1.0.0
 paths:
-  /deliveryInformation:
+  /orderInformation:
     post:
-      summary: Forward information about delivery and drinks
+      summary: Forward information about the order
       description: |
         The order information received from the guest is forwarded to the 
-        assistance manager. This information summarizes a delivery
-        that is to be brought to the guest.
+        assistance manager. 
       requestBody:
         required: true
         content: 
           application/json:
             schema:
-              $ref: "#/components/schemas/deliveryAndDrinksInformation" 
+              $ref: "#/components/schemas/orderInformation" 
             examples:
                 DeliveryAndDrinksInformationForThreePeople:
                   summary: Information about food & drinks for three persons
                   value:
                     {
                       "guest": 2,
+                      "order": 1,
                       "food" : [
                             1,
                             2,
                             1
                       ],
-                       "drinks": [
+                       "drink": [
                             1,
                             2,
                             2
@@ -41,12 +41,12 @@ paths:
           content:
             application/json: 
               schema:
-                $ref: "#/components/schemas/forwardingDeliveryInformationConfirmation"   
+                $ref: "#/components/schemas/forwardingOrderInformationConfirmation"   
   /preparedNotification:
     post:
       summary: Send notification to assistant manager
       description: |
-        When a food is prepared the assistant manager can ve informed
+        When a food is prepared the assistant manager can be informed
         via this endpoint.
       requestBody:
         required: true
@@ -78,19 +78,21 @@ components:
       type: array
       items: 
         $ref: "#/components/schemas/identifier" 
-    deliveryAndDrinksInformation:
+    orderInformation:
       type: object
       properties:
         guest:
+          $ref: "#/components/schemas/identifier"
+        order:
           $ref: "#/components/schemas/identifier"
         food:
           $ref: "#/components/schemas/identifiers"
         drinks:
           $ref: "#/components/schemas/identifiers"
-    forwardingDeliveryInformationConfirmation:
+    forwardingOrderInformationConfirmation:
       type: object
       properties:
-        deliveryAndDrinksInformation:
+        orderInformation:
           description: Delivery Information for Guest 
           $ref: "#/components/schemas/identifier" 
     preparedNotification:
