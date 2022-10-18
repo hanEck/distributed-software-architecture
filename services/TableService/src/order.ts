@@ -1,3 +1,5 @@
+let orderNumber = 0;
+
 export async function order(req: { json: () => any; }){
     const order = req.json();
     const highestOrder = await getFood(order);
@@ -6,12 +8,12 @@ export async function order(req: { json: () => any; }){
 }
 
 async function sendOrderToDelivery(order: { guest?: number; food: any; drink?: number[]; }){
+    orderNumber++;
     fetch("Delivery:8084/orderInformation", {
         method: "POST",
-        body: JSON.stringify(order),
+        body: JSON.stringify({order, orderNumber}),
         headers: {"Content-Type" : "application/json"}
     });
-    // create order number for each order
 }
 
 async function getFood(order: { guest?: number; food: any; drink?: number[]; }){
