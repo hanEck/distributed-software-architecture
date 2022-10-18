@@ -13,27 +13,29 @@ const drinks = [
     },
 ];
 
+let guest = 1;
 const price = [20.2, 10.2];
+
 
 export async function createMenu() {
     //get Food from Markus
-    const meals = await [
-        {
-            name: "Burger",
-            nutrition: ["A", "B", "C"],
-        },
-        {
-            name: "Wiener Schnitzel",
-            nutrition: ["D", "E"],
-        },
-    ];
+    // const meals = await [
+    //     {
+    //         name: "Burger",
+    //         nutrition: ["A", "B", "C"],
+    //     },
+    //     {
+    //         name: "Wiener Schnitzel",
+    //         nutrition: ["D", "E"],
+    //     },
+    // ];
     //----------------------------------
 
-    //const response = await fetch("FoodPreparation:8085/meals");
-    //const meals = await response.json();
+    const response = await fetch("FoodPreparation:8085/meals");
+    const meals = await response.json();
 
     const food = addPriceToFood(meals);
-    return {food: food, drinks: drinks};
+    return {guest: guest++, food: food, drinks: drinks};
 }
 
 function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
