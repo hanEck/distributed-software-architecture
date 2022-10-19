@@ -75,18 +75,11 @@ paths:
                                         {
                                             "food":
                                                 [
-                                                    {"id": 1, "name": "Burger", "price": 20.2},
-                                                    {
-                                                        "id": 2,
-                                                        "name": "Wiener Schnitzel",
-                                                        "price": 10.2,
-                                                    },
+                                                    {"id": 1, "price": 20.2},
+                                                    {"id": 2, "price": 10.2},
                                                 ],
                                             "drinks":
-                                                [
-                                                    {"id": 1, "name": "Soda", "price": 4.4},
-                                                    {"id": 2, "name": "Beer", "price": 5.4},
-                                                ],
+                                                [{"id": 1, "price": 4.4}, {"id": 2, "price": 5.4}],
                                         }
 
 components:
@@ -162,11 +155,6 @@ components:
             properties:
                 id:
                     $ref: "#/components/schemas/identifier"
-                name:
-                    type: string
-                    maxLength: 50
-                    description: A name describing the menu item
-                    example: Wiener Schnitzel
                 price:
                     $ref: "#/components/schemas/money"
         prices:
