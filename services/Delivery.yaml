@@ -42,6 +42,12 @@ paths:
             application/json: 
               schema:
                 $ref: "#/components/schemas/forwardingOrderInformationConfirmation"   
+        "400":
+          description: "The provided order is invalid"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage" 
   /preparedNotification:
     post:
       summary: Send notification to assistant manager
@@ -56,10 +62,10 @@ paths:
               $ref: "#/components/schemas/preparedNotification"
             examples:
               MealPreparedNotifcation:
-                summary: Notification about a specific meal for a specific guest which is prepared
+                summary: Notification about a specific meal within an order which has been prepared
                 value:
                   {
-                    "guest": 2,
+                    "order": 2,
                     "food" : 1
                   }  
       responses:
@@ -69,8 +75,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/preparedNotificationConfirmation"
+        "400":
+          description: "The send notification is invalid"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: "The message content is invalid"
+        "404":
+          description: "The meal does not exist on the given orders"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: "Unknown meal for the given order"
 components:
   schemas:
+    errorMessage:
+      type: string
+      maxLength: 256
+      description: A text message describing an error
     identifier:
       type: integer
       minimum: 0
@@ -98,7 +122,7 @@ components:
     preparedNotification:
       type: object
       properties:
-        guest: 
+        order: 
           $ref: "#/components/schemas/identifier" 
         meal:
           $ref: "#/components/schemas/identifier" 
