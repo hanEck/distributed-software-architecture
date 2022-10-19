@@ -34,7 +34,7 @@ paths:
                       },
                     ]
 
-  /orderItem/{item}:
+  /orderItem:
     parameters:
       - $ref: "#/components/parameters/itemParam"
     post:
@@ -52,7 +52,8 @@ paths:
                 summary: Tells the cook to prepare an order with id 1
                 value:
                   {
-                    "id":1
+                    "id": 1,
+                    "order": 1
                   }
       responses:
         "202":

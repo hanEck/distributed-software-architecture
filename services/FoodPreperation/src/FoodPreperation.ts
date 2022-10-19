@@ -33,15 +33,17 @@ export default class FoodPreparation {
         const orderedMeal = this.cookableMeals.find((meal) => { return meal.id == id});
         console.log(orderedMeal);
         this.ordersInPreparation++;
-        this.manageOrder(orderedMeal)
-        return (this.ordersInPreparation - 1)
+        console.log(this.ordersInPreparation);
+        this.manageOrder(orderedMeal);
+        return (this.ordersInPreparation);
     }
     async manageOrder(orderedMeal: MealItem): Promise<void> {
         const cook = await this.getAvailableCook();
         await cook.prepareMeal(orderedMeal);
-        this.notifyDelivery();
         this.counter.push(orderedMeal.id);
+        //this.notifyDelivery();
         this.ordersInPreparation--;
+        console.log(this.ordersInPreparation);
     }
     getOrdersInPreparation(): number {
         return this.ordersInPreparation;
@@ -64,8 +66,8 @@ export default class FoodPreparation {
     }
     notifyDelivery(): void {
         const meal = this.counter.shift();
-        const path = process.env.API_DELIVERY || "Delivery:8084";;
-        fetch(`${path}//preparedNotification`,{
+        const path = process.env.API_DELIVERY || "Delivery:8084";
+        fetch(`${path}/preparedNotification`,{
             method: "POST",
             body: JSON.stringify({"food": meal}),
             headers: { 'Content-Type': 'application/json' }
