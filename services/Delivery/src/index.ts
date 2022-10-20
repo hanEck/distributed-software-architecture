@@ -65,7 +65,35 @@ interface ReceivedOrderInformation {
     drinks: number[];
 }
 
-const guestOrders: GuestWithOrders[] = [];
+//TODO: Remove dummy data
+const order1: Order = {
+    order: 1,
+    food: [1, 2, 3],
+    drinks: [1, 2, 2]
+}
+const order2: Order = {
+    order: 2,
+    food: [1, 2, 3],
+    drinks: [1, 2, 2]
+}
+const order3: Order = {
+    order: 3,
+    food: [1, 2, 3],
+    drinks: [1, 2, 2]
+}
+const guestOrders: GuestWithOrders[] = [
+    {
+        guest: 21,
+        orders: [order1]
+
+    },
+    {
+        guest: 32,
+        orders: [order2, order3]
+    }
+
+];
+
 
 app.post("/orderInformation", (req, res) => {
     const receivedInformation: ReceivedOrderInformation = req.body;
@@ -75,7 +103,7 @@ app.post("/orderInformation", (req, res) => {
     const originUrl = "http://localhost:5000";
     const urlParams = {
         guest: guestOrder.guest,
-        Order: guestOrder.Order
+        order: guestOrder.Order.order
     }
 
     const drinksOrder = {
@@ -83,14 +111,15 @@ app.post("/orderInformation", (req, res) => {
         food: [] as number[],
         drinks: guestOrder.Order.drinks
     }
-    const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.Order}`)
+    const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.order}`)
 
-    fetch(url.href, {
+    /* fetch(url.href, {
         method: 'POST',
         body: JSON.stringify(drinksOrder),
         headers: { 'Content-Type': 'application/json' }
-    })
+    }) */
     res.send({ message: "Information was send successfully!" })
+    console.log(guestOrders);
 })
 
 //TODO: This double find method on array can be simpliefied, by handing an method into the find method
@@ -139,15 +168,30 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 interface PreparedFood {
-    guest: number,
+    order: number,
     food: number
 }
 app.post("/preparedNotification", (req, res) => {
     const preparedFood: PreparedFood = req.body;
     res.send({ message: "Notification was send successfully!" })
-    console.log(preparedFood);
-
-    //if a meal is prepared, take it and send it to the customer
+    let foodOrder;
+    guestOrders.forEach((guest) => {
+        const orderResult = guest.orders.find((order) => {
+            if (order.order === preparedFood.order) {
+                const mealResult = order.food.find(meal => meal === preparedFood.food)
+                if (mealResult) {
+                    foodOrder = {
+                        guest: guest.guest,
+                        order: {
+                            order: order.order,
+                            food: [mealResult],
+                            drinks: [] as number[]
+                        }
+                    }
+                }
+            }
+        });
+    })
 })
 
 
@@ -157,3 +201,6 @@ app.listen(port, () => {
 
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
+
+//TODO: Refactor whole thing into three different files + maybe an helper service => The fetching method can be outsourced
+//See how the others have structured their code!
