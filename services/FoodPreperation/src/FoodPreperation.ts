@@ -6,6 +6,7 @@
 // - when food is ordered, the number of meals that are prepared before the requested one is returned.
 // - when a meal is prepared it is placed on the counter after its preparation time and delivery is notified.
 
+import { resolveSrv } from "dns";
 import fetch from "node-fetch";
 import Cook from "./Cook";
 import { MealItem } from "./types";
@@ -54,7 +55,11 @@ export default class FoodPreparation {
                 return cook;
             }
         }
-        await setTimeout(() => {this.getAvailableCook()}, 2000);
+        await new Promise<void>((resolve) => {
+            setTimeout(()=> {
+                this.getAvailableCook();
+                resolve();
+            },2000)})
     }
     getCookableMeals(): { name: string; nutrition: string[]; }[] {
         let mealInformation: { name: string; nutrition: string[]; }[] = [];
