@@ -35,7 +35,7 @@ app.get<any, OutgoingRequestResponse, OutgoingRequestRequestBody>("/outgoingRequ
 });
 //////////////////////////////////////Template Code/////////////////////////////////////////////////////////////
 
-//////////////////////////////////////OrderInformation endpoint//////////////////////////////////////////////
+//////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 
 //TODO:The relationship of orders and deliveries must be rethought
 //Can one order have multiple Orders? => e.g. drink Order + first food + second food
@@ -54,12 +54,13 @@ interface GuestWithOrder {
 }
 
 interface Order {
-    Order: number,
+    order: number,
     food: number[],
     drinks: number[]
 }
-interface OrderAndDrinksInformation {
+interface ReceivedOrderInformation {
     guest: number;
+    order: number;
     food: number[];
     drinks: number[];
 }
@@ -67,7 +68,7 @@ interface OrderAndDrinksInformation {
 const guestOrders: GuestWithOrders[] = [];
 
 app.post("/orderInformation", (req, res) => {
-    const receivedInformation: OrderAndDrinksInformation = req.body;
+    const receivedInformation: ReceivedOrderInformation = req.body;
     const guestOrder: GuestWithOrder = addOrder(receivedInformation);
 
     //TODO: Change this URL, when deploying it
@@ -84,58 +85,57 @@ app.post("/orderInformation", (req, res) => {
     }
     const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.Order}`)
 
-    fetch("https://webhook.site/232c4d8e-6f3a-438c-898e-65d1821b41f0", {
+    fetch(url.href, {
         method: 'POST',
         body: JSON.stringify(drinksOrder),
         headers: { 'Content-Type': 'application/json' }
     })
     res.send({ message: "Information was send successfully!" })
-    console.log(guestOrders);
 })
 
 //TODO: This double find method on array can be simpliefied, by handing an method into the find method
 //See the prime number example in the find() Documentation https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find?retiredLocale=de
 
-function addOrder(OrderInformation: OrderAndDrinksInformation): GuestWithOrder {
+function addOrder(ReceivedOrderInformation: ReceivedOrderInformation): GuestWithOrder {
     let addedOrder: GuestWithOrder;
-    if (guestOrders.find(order => order.guest === OrderInformation.guest)) {
-        addedOrder = addOrderToGuest(OrderInformation)
+    if (guestOrders.find(order => order.guest === ReceivedOrderInformation.guest)) {
+        addedOrder = addOrderToGuest(ReceivedOrderInformation)
     }
     else {
-        addedOrder = createNewGuestWithOrder(OrderInformation);
+        addedOrder = createNewGuestWithOrder(ReceivedOrderInformation);
     }
     return addedOrder;
 }
 
-function createNewGuestWithOrder(OrderInformation: OrderAndDrinksInformation): GuestWithOrder {
+function createNewGuestWithOrder(orderInformation: ReceivedOrderInformation): GuestWithOrder {
     const guestOrder: GuestWithOrders = {
-        guest: OrderInformation.guest,
+        guest: orderInformation.guest,
         orders: [{
-            Order: 1,
-            food: OrderInformation.food,
-            drinks: OrderInformation.drinks
+            order: orderInformation.order,
+            food: orderInformation.food,
+            drinks: orderInformation.drinks
         }]
     }
     guestOrders.push(guestOrder);
     return { guest: guestOrder.guest, Order: guestOrder.orders[0] };
 }
 
-function addOrderToGuest(OrderInformation: OrderAndDrinksInformation): GuestWithOrder {
+function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithOrder {
     let OrderItem;
     guestOrders.forEach((element) => {
-        if (element.guest === OrderInformation.guest) {
+        if (element.guest === orderInformation.guest) {
             OrderItem = {
-                Order: +element.orders.length,
-                food: OrderInformation.food,
-                drinks: OrderInformation.drinks
+                order: orderInformation.order,
+                food: orderInformation.food,
+                drinks: orderInformation.drinks
             }
             element.orders.push(OrderItem);
         }
     }
     )
-    return { guest: OrderInformation.guest, Order: OrderItem };
+    return { guest: orderInformation.guest, Order: OrderItem };
 }
-//////////////////////////////////////OrderInformation endpoint//////////////////////////////////////////////
+//////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 interface PreparedFood {
