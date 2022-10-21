@@ -83,7 +83,7 @@ paths:
                 $ref: "#/components/schemas/errorMessage"
               example: "The message content is invalid"
         "404":
-          description: "The meal does not exist on the given orders"
+          description: "The meal does not exist on the given order"
           content:
             text/html:
               schema:
