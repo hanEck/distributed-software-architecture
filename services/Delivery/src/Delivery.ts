@@ -6,7 +6,8 @@ import {
     ReceivedOrderInformation
 } from './interfaces'
 
-import { sendOrderItems, registerDeliveryForBilling } from './Assistant-Manager';
+import AssistantManager from './Assistant-Manager';
+import { resolve } from 'path';
 
 //////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
 const order1: Order = {
@@ -35,10 +36,15 @@ const guestOrders: GuestWithOrders[] = [
         orders: [order2, order3]
     }
 ];
+
+const assistantManagers = [
+    new AssistantManager(),
+    new AssistantManager(),
+    new AssistantManager()]
 //////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
-export function addOrder(ReceivedOrderInformation: ReceivedOrderInformation) {
+export async function addOrder(ReceivedOrderInformation: ReceivedOrderInformation) {
     let addedOrder: GuestWithOrder;
     if (guestOrders.find(order => order.guest === ReceivedOrderInformation.guest)) {
         addedOrder = addOrderToGuest(ReceivedOrderInformation)
@@ -53,7 +59,8 @@ export function addOrder(ReceivedOrderInformation: ReceivedOrderInformation) {
             food: [] as number[]
         }
     }
-    sendOrderItems(drinksOrder);
+    const availableManager = await getAvailableManager();
+    await availableManager.sendOrderItems(drinksOrder);
 }
 
 function createNewGuestWithOrder(orderInformation: ReceivedOrderInformation): GuestWithOrder {
@@ -86,7 +93,7 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
 }//////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
-export function findOrder(preparedFood: PreparedFood) {
+export async function findOrder(preparedFood: PreparedFood) {
     let foodOrder: GuestWithOrder;
     //Helper collection to find the processed item for removal
     let itemIndices: number[] = [];
@@ -110,10 +117,9 @@ export function findOrder(preparedFood: PreparedFood) {
             }
         });
     })
-    sendOrderItems(foodOrder);
-    registerDeliveryForBilling(foodOrder);
+    const availableManager = await getAvailableManager();
+    await availableManager.sendOrderItems(foodOrder);
     removeDeliverdItem(itemIndices);
-
     return foodOrder;
 }
 
@@ -132,3 +138,18 @@ function removeDeliverdItem(indices: number[]) {
 
 }
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
+
+/////////////////////////////////////Generic methods//*  *///////////////////////////////////////////////////////////////////
+async function getAvailableManager(): Promise<AssistantManager> {
+    for (let assistantManager of assistantManagers) {
+        if (!assistantManager.isDelivering) {
+            return assistantManager
+        }
+    }
+    setTimeout(() => {
+        getAvailableManager();
+        resolve();
+    }, 1000)
+}
+
+/////////////////////////////////////Generic methods//////////////////////////////////////////////////////////////////

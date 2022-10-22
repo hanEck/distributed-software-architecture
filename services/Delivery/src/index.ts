@@ -45,6 +45,6 @@ app.listen(port, () => {
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
 //TODO: Handle Error within these two endpoints
-//Remove processed orders
 //Take care of error handling
 //Take the ressource restriction of the assistant manager into account
+//Delete immediatly drinks
