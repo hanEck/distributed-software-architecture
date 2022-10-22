@@ -45,5 +45,6 @@ app.listen(port, () => {
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
 //TODO: Handle Error within these two endpoints
+//Take actual endpoints to send Data
 //Build fetch to the billing
 //Take the ressource restriction of the assistant manager into account

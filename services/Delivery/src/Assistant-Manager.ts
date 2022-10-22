@@ -1,25 +1,44 @@
 import { GuestWithOrder } from './interfaces';
+import fetch from "node-fetch";
 let deliveryId = 0;
 
-export function sendOrderItems(order: GuestWithOrder) {
-    const originUrl = "http://localhost:5000";
+export function sendOrderItems(delivery: GuestWithOrder) {
+    const originUrl = process.env.API_CUSTOMER || "Customer:5000";
     const urlParams = {
-        guest: order.guest,
-        order: order.Order.order
+        guest: delivery.guest,
+        order: delivery.Order.order
     }
+
     const url = new URL(`${originUrl}/guest/${urlParams.guest}/deliveries/${urlParams.order}`)
 
     const deliveryBody = {
         delivery: ++deliveryId,
-        food: order.Order.food,
-        drinks:order.Order.drinks
+        food: delivery.Order.food,
+        drinks: delivery.Order.drinks
     }
-    console.log(deliveryBody);
 
-//TODO: Change this URL, when deploying it
- /*    fetch(url.href, {
+    //TODO: Change this URL, when deploying it
+    fetch(url.href, {
         method: 'POST',
-        body: JSON.stringify(order),
+        body: JSON.stringify(deliveryBody),
         headers: { 'Content-Type': 'application/json' }
-    }) */
+    })
+}
+
+export function registerDeliveryForBilling(delivery: GuestWithOrder) {
+    const originUrl = process.env.API_BILLING || "Billing:8083";
+    const url = new URL(`${originUrl}/registerDelivery`);
+
+    const deliveryBody = {
+        guest: delivery.guest,
+        food: delivery.Order.food,
+        drinks: delivery.Order.drinks
+    }
+
+    fetch(url.href, {
+        method: 'POST',
+        body: JSON.stringify(deliveryBody),
+        headers: { 'Content-Type': 'application/json' }
+    })
+
 }

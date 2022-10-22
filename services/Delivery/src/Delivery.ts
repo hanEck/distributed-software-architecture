@@ -6,7 +6,7 @@ import {
     ReceivedOrderInformation
 } from './interfaces'
 
-import { sendOrderItems } from './Assistant-Manager';
+import { sendOrderItems, registerDeliveryForBilling } from './Assistant-Manager';
 
 //////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
 const order1: Order = {
@@ -106,6 +106,8 @@ export function findOrder(preparedFood: PreparedFood) {
         });
     })
     sendOrderItems(foodOrder);
+    registerDeliveryForBilling(foodOrder);
+
     return foodOrder;
 }
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
