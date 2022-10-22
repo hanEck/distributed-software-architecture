@@ -11,7 +11,7 @@ import { sendOrderItems, registerDeliveryForBilling } from './Assistant-Manager'
 //////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
 const order1: Order = {
     order: 1,
-    food: [1, 2, 3],
+    food: [3],
     drinks: [1, 2, 2]
 }
 const order2: Order = {
@@ -88,26 +88,47 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
 export function findOrder(preparedFood: PreparedFood) {
     let foodOrder: GuestWithOrder;
-    guestOrders.forEach((guest) => {
-        const orderResult = guest.orders.find((order) => {
+    //Helper collection to find the processed item for removal
+    let itemIndices: number[] = [];
+    guestOrders.forEach((guest, indexGuest) => {
+        guest.orders.find((order, indexOrder) => {
             if (order.order === preparedFood.order) {
-                const mealResult = order.food.find(meal => meal === preparedFood.food)
-                if (mealResult) {
-                    foodOrder = {
-                        guest: guest.guest,
-                        Order: {
-                            order: order.order,
-                            food: [mealResult],
-                            drinks: [] as number[]
+                itemIndices.push(indexGuest, indexOrder)
+                const mealResult = order.food.find((meal, indexMeal) => {
+                    if (meal === preparedFood.food) {
+                        itemIndices.push(indexMeal);
+                        foodOrder = {
+                            guest: guest.guest,
+                            Order: {
+                                order: order.order,
+                                food: [mealResult],
+                                drinks: [] as number[]
+                            }
                         }
                     }
-                }
+                })
             }
         });
     })
     sendOrderItems(foodOrder);
     registerDeliveryForBilling(foodOrder);
+    removeDeliverdItem(itemIndices);
 
     return foodOrder;
+}
+
+//BUG: For now there is going to be a Bug if a new Order arrives befor elemnt is Removed
+//Could be solved by initializing a class like style, so you would have multiple arrays
+//For each delivery Processing
+function removeDeliverdItem(indices: number[]) {
+    guestOrders[indices[0]].orders[indices[1]].food.splice(indices[2], 1);
+
+    //TODO: This is not working as expected and there is a logic needed to firstly get rid of orders!
+    if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
+        console.log("In the guest deletion");
+        const deletedItem = guestOrders.slice(indices[0], 1);
+        console.log(deletedItem);
+    }
+
 }
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////

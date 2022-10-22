@@ -17,12 +17,12 @@ export function sendOrderItems(delivery: GuestWithOrder) {
         drinks: delivery.Order.drinks
     }
 
-    //TODO: Change this URL, when deploying it
-    fetch(url.href, {
-        method: 'POST',
-        body: JSON.stringify(deliveryBody),
-        headers: { 'Content-Type': 'application/json' }
-    })
+    //TODO:This needs to be uncommented => Testing purpose
+    /*     fetch(url.href, {
+            method: 'POST',
+            body: JSON.stringify(deliveryBody),
+            headers: { 'Content-Type': 'application/json' }
+        }) */
 }
 
 export function registerDeliveryForBilling(delivery: GuestWithOrder) {
@@ -35,10 +35,11 @@ export function registerDeliveryForBilling(delivery: GuestWithOrder) {
         drinks: delivery.Order.drinks
     }
 
-    fetch(url.href, {
-        method: 'POST',
-        body: JSON.stringify(deliveryBody),
-        headers: { 'Content-Type': 'application/json' }
-    })
+    //TODO:This needs to be uncommented => Testing purpose
+    /*     fetch(url.href, {
+            method: 'POST',
+            body: JSON.stringify(deliveryBody),
+            headers: { 'Content-Type': 'application/json' }
+        }) */
 
 }
