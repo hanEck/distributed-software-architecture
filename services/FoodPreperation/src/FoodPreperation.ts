@@ -6,8 +6,8 @@
 // - when food is ordered, the number of meals that are prepared before the requested one is returned.
 // - when a meal is prepared it is placed on the counter after its preparation time and delivery is notified.
 
-import { resolveSrv } from "dns";
 import fetch from "node-fetch";
+import path from "path";
 import Cook from "./Cook";
 import { MealItem } from "./types";
 
@@ -40,7 +40,9 @@ export default class FoodPreparation {
     }
     async manageOrder(orderedMeal: MealItem): Promise<void> {
         const cook = await this.getAvailableCook();
-        await cook.prepareMeal(orderedMeal);
+        if(cook) {
+            await cook.prepareMeal(orderedMeal);
+        }
         this.counter.push(orderedMeal.id);
         //this.notifyDelivery();
         this.ordersInPreparation--;
@@ -49,17 +51,17 @@ export default class FoodPreparation {
     getOrdersInPreparation(): number {
         return this.ordersInPreparation;
     }
-    async getAvailableCook(): Promise<Cook> {
+    async getAvailableCook():Promise<any> {
         for(let cook of this.cooks) {
             if (!cook.isCooking) {
                 return cook;
             }
         }
         await new Promise<void>((resolve) => {
-            setTimeout(()=> {
-                this.getAvailableCook();
+            setTimeout(async()=> {
                 resolve();
             },2000)})
+        return await this.getAvailableCook();
     }
     getCookableMeals(): { name: string; nutrition: string[]; }[] {
         let mealInformation: { name: string; nutrition: string[]; }[] = [];
