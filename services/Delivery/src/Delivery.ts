@@ -41,6 +41,7 @@ const assistantManagers = [
     new AssistantManager(),
     new AssistantManager(),
     new AssistantManager()]
+
 //////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
@@ -131,25 +132,44 @@ function removeDeliverdItem(indices: number[]) {
 
     //TODO: This is not working as expected and there is a logic needed to firstly get rid of orders!
     if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
-        console.log("In the guest deletion");
         const deletedItem = guestOrders.slice(indices[0], 1);
-        console.log(deletedItem);
     }
 
 }
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
 
-/////////////////////////////////////Generic methods//*  *///////////////////////////////////////////////////////////////////
+/////////////////////////////////////Helper Methods/////////////////////////////////////////////////////////////////////
+
+//The loop within this Method iterates until a manager is available (manuel stop)
 async function getAvailableManager(): Promise<AssistantManager> {
+    const keepLooping = true;
+    let checkingResult;
+
+    while(keepLooping){
+         checkingResult = await checkForManager(); 
+        if(checkingResult){
+            break;
+        }
+    }
+    return checkingResult;
+}
+
+//Method checks if there is a manager availbale and if not calls a delay followed by returning an undefined
+async function checkForManager() {
     for (let assistantManager of assistantManagers) {
         if (!assistantManager.isDelivering) {
             return assistantManager
         }
     }
-    setTimeout(() => {
-        getAvailableManager();
-        resolve();
-    }, 1000)
+    await delayFoManagerAssignment()
+    return undefined
+}
+
+//Sets delay to keep time between each while loop in the outer function
+function delayFoManagerAssignment() {
+    return new Promise((resolve) => { setTimeout(resolve, 1000); })
 }
 
 /////////////////////////////////////Generic methods//////////////////////////////////////////////////////////////////
+
+

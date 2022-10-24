@@ -21,13 +21,15 @@ export default class AssistantManager {
         }
 
         this.isDelivering = true;
-        await this.delay();
+
+        await delay();
         //TODO:This needs to be uncommented => Testing purpose
         /*         await fetch(url.href, {
                     method: 'POST',
                     body: JSON.stringify(deliveryBody),
                     headers: { 'Content-Type': 'application/json' }
                 }) */
+                
         await this.registerDeliveryForBilling(delivery);
         this.isDelivering = false;
     }
@@ -49,17 +51,14 @@ export default class AssistantManager {
                 }) */
     }
 
-    //Helper function for testing!
-    async delay() {
-        console.log("In the delay");
-
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve;
-            }, 10000)
-        })
-    }
 }
+//Helper function for testing!
+function delay() {
+    return (new Promise((resolve) => {
+        setTimeout(resolve,10000);
+    }))
+}
+
 
 
 //IDEA: Making the Manager as a class
