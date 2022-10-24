@@ -8,17 +8,29 @@ const port = parseInt(process.env.PORT, 10) || 3000;
 const myTargetConfiguration = process.env.MY_TARGET_CONFIGURATION || "http://google.com";
 
 const app = express();
-app.use(bodyParser.json());
+app.use((req, res, next) => {
+    bodyParser.json()(req, res, err => {
+        if (err) {
+            return res.status(400).send(`The send body is not a valid JS object!`)
+        }
+        next();
+    })
+});
 
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 app.post("/orderInformation", (req, res) => {
-    const receivedInformation: ReceivedOrderInformation = req.body;
+    try {
+        const receivedInformation: ReceivedOrderInformation = req.body;
+        console.log(typeof (receivedInformation));
 
-    //TODO: Could add return value in case we want to check if delivery has been successfull
-    addOrder(receivedInformation);
+        addOrder(receivedInformation);
 
-    res.send({ message: "Information was send successfully!" })
+        res.send({ message: "Information was send successfully!" })
+    }
+    catch (e) {
+        res.status(400);
+    }
 })
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
@@ -45,6 +57,5 @@ app.listen(port, () => {
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
 //TODO: Handle Error within these two endpoints
-//Implement a ressource restriction for information and notification 
-//Take care of error handling
+//Take care of error handling (Only errors regarding fiels in JSON is unchecked!)
 //Delete immediatly send drinks out of order drinks
