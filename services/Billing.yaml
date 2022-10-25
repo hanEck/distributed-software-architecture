@@ -7,6 +7,11 @@ info:
 paths:
     /bills/{guest}:
         post:
+            summary: Generates the bill for a guest with all unpaid but delivered items
+            operationId: generate-bill
+            description: |
+                Returns the delivered items of the customer together with a total sum as part of the bill.
+                Note: bill and orders don't need to fully match, e.g. you can have 3 orders with different food and drink items paid by two separate bills.
             parameters:
             -   name: guest
                 description: Identifier of a guest in the restaurant
@@ -14,11 +19,6 @@ paths:
                 required: true
                 schema:
                     $ref: "#/components/schemas/identifier"
-            summary: Generates the bill for a guest with all unpaid but delivered items
-            operationId: generate-bill
-            description: |
-                Returns the delivered items of the customer together with a total sum as part of the bill.
-                Note: bill and orders don't need to fully match, e.g. you can have 3 orders with different food and drink items paid by two separate bills.
             responses:
                 "200":
                     description: A new bill was generated successfully
@@ -95,6 +95,13 @@ paths:
                                     summary: More payment option for the bill
                                     value:
                                       [ "Cash", "DebitCard" ]
+                "404":
+                    description: No bill matches the specified id
+                    content:
+                        text/html:
+                            schema:
+                                $ref: "#/components/schemas/errorMessage"
+                            example: Bill was not found
         post:
             summary: Pays the bill
             description: |
@@ -148,7 +155,7 @@ paths:
                         text/html:
                             schema:
                                 $ref: "#/components/schemas/errorMessage"
-                            example: Please pay at least 123.45 euros for this bill
+                            example: Please pay at least 123.45 euros to cover this bill
                 "410":
                     description: The bill is not open and was either paid or cancelled
                     content:
@@ -156,12 +163,19 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/errorMessage"
                             example: No payment for the bill required
-    /registerDelivery:
+    /registerDelivery/{guest}:
         post:
             summary: Registers items as delivered, when they are delivered to a guest
-            operationId: register-items
+            operationId: register-delivery
             description: |
                 Registers all items in the body as delivered to a specific guest
+            parameters:
+            -   name: guest
+                description: Identifier of a guest in the restaurant
+                in: path
+                required: true
+                schema:
+                    $ref: "#/components/schemas/identifier"
             requestBody:
                 required: true
                 content:
@@ -173,7 +187,7 @@ paths:
                                 summary: Registers items, which are delivered to a guest
                                 value:
                                   {
-                                      "guest": 3,
+                                      "order": 5,
                                       "food": [ 2, 5, 8, 1 ],
                                       "drinks": [ 1, 3, 9, 12 ]
                                   }
@@ -187,20 +201,13 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/errorMessage"
                             example: No guest id was specified
-                "404":
-                    description: The specified guest was not found
-                    content:
-                        text/html:
-                            schema:
-                                $ref: "#/components/schemas/errorMessage"
-                            example: Guest does not exist
                 "416":
                     description: No items were specified for registration
                     content:
                         text/html:
                             schema:
                                 $ref: "#/components/schemas/errorMessage"
-                            example: No items were passed for registration
+                            example: No items were specified for registration
 
 
 
@@ -289,6 +296,9 @@ components:
             properties:
                 guest:
                     description: Identifier of a guest in the restaurant
+                    $ref: "#/components/schemas/identifier"
+                order:
+                    description: Identifier of an order
                     $ref: "#/components/schemas/identifier"
                 food:
                     description: Lists all Ids of the delivered food items

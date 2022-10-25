@@ -97,11 +97,12 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 });
 
 // Registers items as delivered, when they are delivered to a guest
-app.post<string, any, any, ItemRegistration>("/registerDelivery", (req, res) => {
-	const itemRegistration = req.body;
-	const { guest, food, drinks } = itemRegistration;
+app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:guestId", (req, res) => {
+	const guestId = req.params.guestId;
+	const body = req.body;
+	const { food, drinks } = body;
 
-	if (typeof guest !== "number") {
+	if (typeof guestId !== "number") {
 		res.status(400);
 		return res.send("No guest was specified");
 	}
@@ -111,7 +112,7 @@ app.post<string, any, any, ItemRegistration>("/registerDelivery", (req, res) => 
 		return res.send("No items were specified for registration");
 	}
 
-	billingService.registerDeliveredItems(itemRegistration);
+	billingService.registerDeliveredItems({ ...body, guest: guestId });
 
 	res.status(200);
 	res.send("Items have been registered successfully");
