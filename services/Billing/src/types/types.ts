@@ -6,6 +6,7 @@ export interface PaidOrder {
 
 export interface Bill {
 	bill: number; // id of the bill
+	order: number;
 	orderedDrinks: number[];
 	orderedFood: number[];
 	totalSum: number; // in Euros
@@ -14,6 +15,7 @@ export interface Bill {
 export interface PaidBill {
 	bill: number; // id of the bill
 	paidOrders: PaidOrder[];
+	totalSum: number
 }
 
 export interface BillPayment {
@@ -23,6 +25,7 @@ export interface BillPayment {
 
 export interface ItemRegistration {
 	guest: number; // id of the guest
+	order: number; // id of the order
 	food: number[];
 	drinks: number[];
 }
@@ -36,12 +39,10 @@ export enum PAYMENT_METHOD {
 export interface MenuItem {
 	id: number;
 	name: string;
-	nutrition: NUTRITION[];
 	price: number;
 }
 
 export interface Menu {
-	guest: number; // id of the guest
 	food: MenuItem[];
 	drinks: MenuItem[];
 }
@@ -62,3 +63,5 @@ export enum NUTRITION {
 	P = "P",
 	R = "R"
 }
+
+export type ErrorMessage = string;
