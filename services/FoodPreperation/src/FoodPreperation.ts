@@ -9,10 +9,10 @@
 import fetch from "node-fetch";
 import path from "path";
 import Cook from "./Cook";
-import { MealItem } from "./types";
+import { CookableMeal, MealItem, OrderItem } from "./types";
 
 export default class FoodPreparation {
-    ordersInPreparation: number = 0;
+    ordersInPreparation = 0;
     cooks = [new Cook(), new Cook(), new Cook()];
     cookableMeals = [
         {
@@ -28,30 +28,30 @@ export default class FoodPreparation {
             "ingredients": ["Meat", "Potato", "Egg", "Breadcrumbs"]
         }
     ];
-    counter: number[] = [];
+    counter: OrderItem[] = [];
 
-    takeOrder(id: number): number {
+    takeOrder(id: number, order: number): string {
         const orderedMeal = this.cookableMeals.find((meal) => { return meal.id == id});
-        console.log(orderedMeal);
-        this.ordersInPreparation++;
-        console.log(this.ordersInPreparation);
-        this.manageOrder(orderedMeal);
-        return (this.ordersInPreparation);
+        if(orderedMeal) {
+            this.ordersInPreparation++;
+            this.manageOrder(orderedMeal, order);
+            return (this.ordersInPreparation.toString());
+        } else {
+            return undefined;
+        }
     }
-    async manageOrder(orderedMeal: MealItem): Promise<void> {
+
+    private async manageOrder(orderedMeal: MealItem, order: number): Promise<void> {
         const cook = await this.getAvailableCook();
         if(cook) {
             await cook.prepareMeal(orderedMeal);
+            this.counter.push({id:orderedMeal.id, order: order});
+            this.notifyDelivery();
+            this.ordersInPreparation--;
         }
-        this.counter.push(orderedMeal.id);
-        //this.notifyDelivery();
-        this.ordersInPreparation--;
-        console.log(this.ordersInPreparation);
     }
-    getOrdersInPreparation(): number {
-        return this.ordersInPreparation;
-    }
-    async getAvailableCook():Promise<any> {
+
+    private async getAvailableCook():Promise<Cook> {
         for(let cook of this.cooks) {
             if (!cook.isCooking) {
                 return cook;
@@ -63,21 +63,25 @@ export default class FoodPreparation {
             },2000)})
         return await this.getAvailableCook();
     }
-    getCookableMeals(): { name: string; nutrition: string[]; }[] {
-        let mealInformation: { name: string; nutrition: string[]; }[] = [];
+
+    getCookableMeals(): CookableMeal[] {
+        let mealInformation: CookableMeal[] = [];
         this.cookableMeals.forEach((meal) => {
             const {ingredients, ...information} = meal;
             mealInformation.push(information);
         });
         return mealInformation;
     }
-    notifyDelivery(): void {
-        const meal = this.counter.shift();
+
+    private notifyDelivery(): void {
+        const {id, order} = this.counter.shift();
         const path = process.env.API_DELIVERY || "Delivery:8084";
-        fetch(`${path}/preparedNotification`,{
-            method: "POST",
-            body: JSON.stringify({"food": meal}),
-            headers: { 'Content-Type': 'application/json' }
-        });
+            fetch(`${path}/preparedNotification`,{
+                method: "POST",
+                body: JSON.stringify({"food": id,"order": order}),
+                headers: { 'Content-Type': 'application/json' }
+            }).catch (() => {
+            console.log("An error occured trying to send a delivery notification");
+        })
     }
 }
