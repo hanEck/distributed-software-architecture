@@ -45,13 +45,13 @@ const assistantManagers = [
 //////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
-export async function addOrder(ReceivedOrderInformation: ReceivedOrderInformation) {
+export async function addOrder(receivedOrderInformation: ReceivedOrderInformation) {
     let addedOrder: GuestWithOrder;
-    if (guestOrders.find(order => order.guest === ReceivedOrderInformation.guest)) {
-        addedOrder = addOrderToGuest(ReceivedOrderInformation)
+    if (guestOrders.find(order => order.guest === receivedOrderInformation.guest)) {
+        addedOrder = addOrderToGuest(receivedOrderInformation)
     }
     else {
-        addedOrder = createNewGuestWithOrder(ReceivedOrderInformation);
+        addedOrder = createNewGuestWithOrder(receivedOrderInformation);
     }
     const drinksOrder = {
         guest: addedOrder.guest,
@@ -62,6 +62,7 @@ export async function addOrder(ReceivedOrderInformation: ReceivedOrderInformatio
     }
     const availableManager = await getAvailableManager();
     await availableManager.sendOrderItems(drinksOrder);
+    removeDrinksFromOrder(drinksOrder.Order.order);
 }
 
 function createNewGuestWithOrder(orderInformation: ReceivedOrderInformation): GuestWithOrder {
@@ -120,22 +121,35 @@ export async function findOrder(preparedFood: PreparedFood) {
     })
     const availableManager = await getAvailableManager();
     await availableManager.sendOrderItems(foodOrder);
-    removeDeliverdItem(itemIndices);
+    removeDeliverdFood(itemIndices);
     return foodOrder;
 }
 
-//BUG: For now there is going to be a Bug if a new Order arrives befor elemnt is Removed
-//Could be solved by initializing a class like style, so you would have multiple arrays
-//For each delivery Processing
-function removeDeliverdItem(indices: number[]) {
+function removeDrinksFromOrder(orderNumber: number) {
+    guestOrders.forEach((guest) => {
+        guest.orders.find((order) => {        
+            if (order.order === orderNumber){
+                order.drinks = []as number[]      
+            }
+        })
+    })
+}
+//Method will remove specific food item
+//Furthermore the collections the item is included in (order/guest) will also get
+//removed when they are empty
+function removeDeliverdFood(indices: number[]) {
     guestOrders[indices[0]].orders[indices[1]].food.splice(indices[2], 1);
 
     //TODO: This is not working as expected and there is a logic needed to firstly get rid of orders!
-    if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
-        const deletedItem = guestOrders.slice(indices[0], 1);
-    }
 
+    if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
+        guestOrders[indices[0]].orders.splice(indices[1], 1);
+        if(guestOrders[indices[0]].orders.length===0){
+            guestOrders.splice(indices[0],1)
+        }
+    }
 }
+
 //////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
 
 /////////////////////////////////////Helper Methods/////////////////////////////////////////////////////////////////////
@@ -145,9 +159,9 @@ async function getAvailableManager(): Promise<AssistantManager> {
     const keepLooping = true;
     let checkingResult;
 
-    while(keepLooping){
-         checkingResult = await checkForManager(); 
-        if(checkingResult){
+    while (keepLooping) {
+        checkingResult = await checkForManager();
+        if (checkingResult) {
             break;
         }
     }

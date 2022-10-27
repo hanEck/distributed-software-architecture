@@ -3,9 +3,7 @@ import bodyParser = require("body-parser");
 import { PreparedFood, ReceivedOrderInformation } from './interfaces'
 import { addOrder, findOrder } from './Delivery'
 
-
 const port = parseInt(process.env.PORT, 10) || 3000;
-const myTargetConfiguration = process.env.MY_TARGET_CONFIGURATION || "http://google.com";
 
 const app = express();
 app.use((req, res, next) => {
@@ -22,7 +20,6 @@ app.use((req, res, next) => {
 app.post("/orderInformation", (req, res) => {
     try {
         const receivedInformation: ReceivedOrderInformation = req.body;
-        console.log(typeof (receivedInformation));
 
         addOrder(receivedInformation);
 
