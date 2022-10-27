@@ -22,7 +22,7 @@ export default class AssistantManager {
 
         this.isDelivering = true;
 
-        await delay();
+       // await delay();
         //TODO:This needs to be uncommented => Testing purpose
         /*         await fetch(url.href, {
                     method: 'POST',
@@ -36,7 +36,10 @@ export default class AssistantManager {
 
     async registerDeliveryForBilling(delivery: GuestWithOrder) {
         const originUrl = process.env.API_BILLING || "Billing:8083";
-        const url = new URL(`${originUrl}/registerDelivery`);
+        const urlParams = {
+            guest: delivery.guest,
+        }
+        const url = new URL(`${originUrl}/registerDelivery/${urlParams.guest}`);
 
         const deliveryBody = {
             guest: delivery.guest,
