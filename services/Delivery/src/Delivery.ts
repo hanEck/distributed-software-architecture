@@ -134,14 +134,12 @@ function removeDrinksFromOrder(orderNumber: number) {
         })
     })
 }
+
 //Method will remove specific food item
 //Furthermore the collections the item is included in (order/guest) will also get
 //removed when they are empty
 function removeDeliverdFood(indices: number[]) {
     guestOrders[indices[0]].orders[indices[1]].food.splice(indices[2], 1);
-
-    //TODO: This is not working as expected and there is a logic needed to firstly get rid of orders!
-
     if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
         guestOrders[indices[0]].orders.splice(indices[1], 1);
         if(guestOrders[indices[0]].orders.length===0){

@@ -61,9 +61,3 @@ function delay() {
         setTimeout(resolve,10000);
     }))
 }
-
-
-
-//IDEA: Making the Manager as a class
-//Only allow to innitialze three objects of this class
-//Alway when this class is a ressource is blocked

@@ -39,7 +39,7 @@ app.post("/preparedNotification", (req, res) => {
     const foundOrder = findOrder(preparedFood);
 
     if (foundOrder) {
-        res.status(200).send("OK")
+        res.status(200).send("Notification was send successfully!")
     }
     else {
         res.status(404).send(
@@ -54,5 +54,7 @@ app.listen(port, () => {
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
 //TODO: Handle Error within these two endpoints
-//Take care of error handling (Only errors regarding fiels in JSON is unchecked!)
-//Delete immediatly send drinks out of order drinks
+//oderInformation => Check if all neccessary fields were send 
+//guest and order id and no empty items condition
+
+//prepareNotification => Check if given order with food exists
