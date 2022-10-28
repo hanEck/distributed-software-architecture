@@ -15,13 +15,12 @@ app.use((req, res, next) => {
     })
 });
 
-
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, res) => {
     const receivedInformation = req.body;
     const hasError = checkRequestBodyOrderInformation(receivedInformation)
     if (hasError[0]) {
-        res.status(401).send(hasError[1])
+        res.status(404).send(hasError[1])
     }
     else {
         manageOrder(receivedInformation);
@@ -32,7 +31,6 @@ app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
-
 app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, res) => {
     const preparedFood = req.body;
     const hasError = checkRequestBodyPreparedNotification(preparedFood)

@@ -43,11 +43,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/forwardingOrderInformationConfirmation"   
         "400":
-          description: "The provided order is invalid"
+          description: "The send message has an invalid JS in the body!"
           content:
             text/html:
               schema:
                 $ref: "#/components/schemas/errorMessage" 
+        "404":
+          description: "The send content is invalid"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: "Unknown meal for the given order"
   /preparedNotification:
     post:
       summary: Send notification to assistant manager
@@ -76,14 +83,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/preparedNotificationConfirmation"
         "400":
-          description: "The send notification is invalid"
+          description: "The send message has an invalid JS in the body!"
           content:
             text/html:
               schema:
                 $ref: "#/components/schemas/errorMessage"
-              example: "The message content is invalid"
+              example: "The message body is invalid"
         "404":
-          description: "The meal does not exist on the given order"
+          description: "The send content is invalid"
           content:
             text/html:
               schema:
