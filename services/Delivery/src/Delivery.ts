@@ -1,51 +1,18 @@
 import {
     GuestWithOrder,
     GuestWithOrders,
-    Order,
     PreparedFood,
     ReceivedOrderInformation
 } from './interfaces'
-
 import AssistantManager from './Assistant-Manager';
-import { resolve } from 'path';
 
-//////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
-const order1: Order = {
-    order: 1,
-    food: [3],
-    drinks: [1, 2, 2]
-}
-const order2: Order = {
-    order: 2,
-    food: [1, 2, 3],
-    drinks: [1, 2, 2]
-}
-const order3: Order = {
-    order: 3,
-    food: [1, 2, 3],
-    drinks: [1, 2, 2]
-}
-const guestOrders: GuestWithOrders[] = [
-    {
-        guest: 21,
-        orders: [order1]
-
-    },
-    {
-        guest: 32,
-        orders: [order2, order3]
-    }
-];
-
+const guestOrders: GuestWithOrders[] = [];
 const assistantManagers = [
     new AssistantManager(),
     new AssistantManager(),
     new AssistantManager()]
-
-//////////////////////////////////////Dummy Data//////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
-export async function addOrder(receivedOrderInformation: ReceivedOrderInformation) {
+//////////////////////////////////////receivedOrderInformation endpoint///////////////////////////////////////////////
+export async function manageOrder(receivedOrderInformation: ReceivedOrderInformation) {
     let addedOrder: GuestWithOrder;
     if (guestOrders.find(order => order.guest === receivedOrderInformation.guest)) {
         addedOrder = addOrderToGuest(receivedOrderInformation)
@@ -92,9 +59,10 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
     }
     )
     return { guest: orderInformation.guest, Order: OrderItem };
-}//////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
+}
+//////////////////////////////////////receivedOrderInformation endpoint//////////////////////////////////////////////
 
-//////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
+//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 export async function findOrder(preparedFood: PreparedFood) {
     let foodOrder: GuestWithOrder;
     //Helper collection to find the processed item for removal
@@ -151,11 +119,9 @@ function removeDeliverdFood(indices: number[]) {
         }
     }
 }
+//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
-//////////////////////////////////////Prepare notification endpoint///////////////////////////////////////////////////
-
-/////////////////////////////////////Helper Methods/////////////////////////////////////////////////////////////////////
-
+/////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////////
 //The loop within this Method iterates until a manager is available (manuel stop)
 async function getAvailableManager(): Promise<AssistantManager> {
     const keepLooping = true;
@@ -185,7 +151,6 @@ async function checkForManager() {
 function delayFoManagerAssignment() {
     return new Promise((resolve) => { setTimeout(resolve, 1000); })
 }
-
 /////////////////////////////////////Generic methods//////////////////////////////////////////////////////////////////
 
 

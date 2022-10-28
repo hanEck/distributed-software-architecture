@@ -1,6 +1,6 @@
 import { GuestWithOrder } from './interfaces';
 import fetch from "node-fetch";
-import { resolve } from 'path';
+
 let deliveryId = 0;
 
 export default class AssistantManager {
@@ -22,14 +22,13 @@ export default class AssistantManager {
 
         this.isDelivering = true;
 
-       // await delay();
         //TODO:This needs to be uncommented => Testing purpose
-        /*         await fetch(url.href, {
+                await fetch(url.href, {
                     method: 'POST',
                     body: JSON.stringify(deliveryBody),
                     headers: { 'Content-Type': 'application/json' }
-                }) */
-                
+                })
+
         await this.registerDeliveryForBilling(delivery);
         this.isDelivering = false;
     }
@@ -46,18 +45,11 @@ export default class AssistantManager {
             food: delivery.Order.food,
             drinks: delivery.Order.drinks
         }
-        //TODO:This needs to be uncommented => Testing purpose
-        /*         await fetch(url.href, {
+                await fetch(url.href, {
                     method: 'POST',
                     body: JSON.stringify(deliveryBody),
                     headers: { 'Content-Type': 'application/json' }
-                }) */
+                })
     }
 
-}
-//Helper function for testing!
-function delay() {
-    return (new Promise((resolve) => {
-        setTimeout(resolve,10000);
-    }))
 }

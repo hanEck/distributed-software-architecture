@@ -1,7 +1,7 @@
 import express = require("express");
 import bodyParser = require("body-parser");
 import { PreparedFood, ReceivedOrderInformation } from './interfaces'
-import { addOrder, findOrder } from './Delivery'
+import { manageOrder, findOrder } from './Delivery'
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
@@ -24,9 +24,8 @@ app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, 
         res.status(401).send(hasError[1])
     }
     else {
-        addOrder(receivedInformation);
+        manageOrder(receivedInformation);
         res.status(200).send(hasError[1])
-        addOrder(receivedInformation);
     }
 })
 
@@ -52,7 +51,6 @@ app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, re
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
-
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
 //////////////////////////////////////Helper methods////////////////////////////////////////////////////////////
