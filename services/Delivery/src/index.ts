@@ -17,16 +17,16 @@ app.use((req, res, next) => {
 
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
-app.post("/orderInformation", (req, res) => {
-    try {
-        const receivedInformation: ReceivedOrderInformation = req.body;
-
-        addOrder(receivedInformation);
-
-        res.send({ message: "Information was send successfully!" })
+app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, res) => {
+    const receivedInformation = req.body;
+    const hasError = checkRequestBodyOrderInformation(receivedInformation)
+    if (hasError[0]) {
+        res.status(401).send(hasError[1])
     }
-    catch (e) {
-        res.status(400);
+    else {
+        addOrder(receivedInformation);
+        res.status(200).send(hasError[1])
+        addOrder(receivedInformation);
     }
 })
 
@@ -34,16 +34,18 @@ app.post("/orderInformation", (req, res) => {
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
-app.post("/preparedNotification", (req, res) => {
-    const preparedFood: PreparedFood = req.body;
-    const foundOrder = findOrder(preparedFood);
-
-    if (foundOrder) {
-        res.status(200).send("Notification was send successfully!")
+app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, res) => {
+    const preparedFood = req.body;
+    const hasError = checkRequestBodyPreparedNotification(preparedFood)
+    const foundOrder = await findOrder(preparedFood);
+    if (hasError[0]) {
+        res.status(404).send(hasError[1]);
+    }
+    else if (!foundOrder) {
+        res.status(404).send(`The prepared meal ${preparedFood.food} does not exist on the order with the id ${preparedFood.order}`);
     }
     else {
-        res.status(404).send(
-            `The prepared meal with the id ${preparedFood.food} does not exist within the order with the id ${preparedFood.order}`)
+        res.status(200).send(hasError[1]);
     }
 })
 
@@ -53,8 +55,38 @@ app.listen(port, () => {
 
 //////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
 
-//TODO: Handle Error within these two endpoints
-//oderInformation => Check if all neccessary fields were send 
-//guest and order id and no empty items condition
+//////////////////////////////////////Helper methods////////////////////////////////////////////////////////////
+function checkRequestBodyOrderInformation(receivedBody: ReceivedOrderInformation) {
+    if (!receivedBody.guest) {
+        return [true, "Error: Guest number is missing!"];
+    }
+    else if (!receivedBody.order) {
+        return [true, "Error: Order number is missing!"];
+    }
+    else if (
+        (receivedBody.food.length === 0 &&
+            receivedBody.drinks.length === 0) ||
+        !receivedBody.food ||
+        !receivedBody.drinks
 
-//prepareNotification => Check if given order with food exists
+    ) {
+        return [true, "Error: The send order does not contain any drink or food or one of the fields is missing!"]
+
+    }
+    else {
+        return [false, "Success:The information have been send!"]
+    }
+}
+
+function checkRequestBodyPreparedNotification(receivedBody: PreparedFood) {
+    if (!receivedBody.food) {
+        return [true, "Error: Received body does not have the required field food!"]
+    }
+    else if (!receivedBody.order) {
+        return [true, "Error: Received body does not have the required field order!"]
+    }
+    else {
+        return [false, "Success: The notification has been send successfully!"];
+    }
+}
+//////////////////////////////////////Helper methods////////////////////////////////////////////////////////////

@@ -119,17 +119,21 @@ export async function findOrder(preparedFood: PreparedFood) {
             }
         });
     })
-    const availableManager = await getAvailableManager();
-    await availableManager.sendOrderItems(foodOrder);
-    removeDeliverdFood(itemIndices);
+    if (foodOrder) {
+        const availableManager = await getAvailableManager();
+        await availableManager.sendOrderItems(foodOrder);
+        removeDeliverdFood(itemIndices);
+        return foodOrder;
+    }
+
     return foodOrder;
 }
 
 function removeDrinksFromOrder(orderNumber: number) {
     guestOrders.forEach((guest) => {
-        guest.orders.find((order) => {        
-            if (order.order === orderNumber){
-                order.drinks = []as number[]      
+        guest.orders.find((order) => {
+            if (order.order === orderNumber) {
+                order.drinks = [] as number[]
             }
         })
     })
@@ -142,8 +146,8 @@ function removeDeliverdFood(indices: number[]) {
     guestOrders[indices[0]].orders[indices[1]].food.splice(indices[2], 1);
     if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
         guestOrders[indices[0]].orders.splice(indices[1], 1);
-        if(guestOrders[indices[0]].orders.length===0){
-            guestOrders.splice(indices[0],1)
+        if (guestOrders[indices[0]].orders.length === 0) {
+            guestOrders.splice(indices[0], 1)
         }
     }
 }
