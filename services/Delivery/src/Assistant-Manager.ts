@@ -22,11 +22,12 @@ export default class AssistantManager {
 
         this.isDelivering = true;
 
-        //TODO:This needs to be uncommented => Testing purpose
                 await fetch(url.href, {
                     method: 'POST',
                     body: JSON.stringify(deliveryBody),
                     headers: { 'Content-Type': 'application/json' }
+                }).catch(()=>{
+                    console.log("Error: An issue occured by sending delivery to customeer!");
                 })
 
         await this.registerDeliveryForBilling(delivery);
@@ -49,6 +50,8 @@ export default class AssistantManager {
                     method: 'POST',
                     body: JSON.stringify(deliveryBody),
                     headers: { 'Content-Type': 'application/json' }
+                }).catch(()=>{
+                    console.log("Error: An issue occured by sending delivery to billing!");
                 })
     }
 
