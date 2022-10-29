@@ -1,36 +1,16 @@
-// TO DO
-// -provides a list of cookable meals with name and nutrition information
-// Rules
-// - only orders for a single menu item can be placed at once
-// - meal preparation takes a defined time, which is calculated by the number of ingredients * 2.
-// - when food is ordered, the number of meals that are prepared before the requested one is returned.
-// - when a meal is prepared it is placed on the counter after its preparation time and delivery is notified.
-
 import fetch from "node-fetch";
-import path from "path";
 import Cook from "./Cook";
-import { CookableMeal, MealItem, OrderItem } from "./types";
+import { cookableMeals } from "./Meals";
+import { CookableMeal, MealItem, OrderItem } from "./Types/types";
+import { delay } from "./Utils/Utils";
 
 export default class FoodPreparation {
     ordersInPreparation = 0;
     cooks = [new Cook(), new Cook(), new Cook()];
-    cookableMeals = [
-        {
-            "id": 1,
-            "name": "Burger",
-            "nutrition": [ "A", "B", "C"],
-            "ingredients": ["Meat", "Salad", "Tomato", "Bun"]
-        },
-        {
-            "id": 2,
-            "name": "Wiener Schnitzel",
-            "nutrition": [ "D", "E"],
-            "ingredients": ["Meat", "Potato", "Egg", "Breadcrumbs"]
-        }
-    ];
+    cookableMeals = cookableMeals
     counter: OrderItem[] = [];
 
-    takeOrder(id: number, order: number): string {
+    takeOrder(id: number, order: number): string | undefined {
         const orderedMeal = this.cookableMeals.find((meal) => { return meal.id == id});
         if(orderedMeal) {
             this.ordersInPreparation++;
@@ -57,15 +37,12 @@ export default class FoodPreparation {
                 return cook;
             }
         }
-        await new Promise<void>((resolve) => {
-            setTimeout(async()=> {
-                resolve();
-            },2000)})
+        await delay(2000);
         return await this.getAvailableCook();
     }
 
     getCookableMeals(): CookableMeal[] {
-        let mealInformation: CookableMeal[] = [];
+        const mealInformation: CookableMeal[] = [];
         this.cookableMeals.forEach((meal) => {
             const {ingredients, ...information} = meal;
             mealInformation.push(information);

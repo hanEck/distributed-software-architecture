@@ -1,17 +1,11 @@
-import { MealItem } from "./types";
+import { MealItem } from "./Types/types";
+import { delay } from "./Utils/Utils";
 
 export default class Cook {
     isCooking: boolean = false;
     async prepareMeal(meal: MealItem): Promise<void> {
         this.isCooking = true;
-        await cookingDelay(meal.ingredients.length);
-        console.log("cook is done");
+        await delay(meal.ingredients.length * 2000);
         this.isCooking = false;
     }
-}
-
-function cookingDelay(factor: number) {
-    return (new Promise((resolve) => {
-        setTimeout(resolve,2000 * factor);
-    }))
 }
