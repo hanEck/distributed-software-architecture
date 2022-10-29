@@ -1,35 +1,12 @@
-const drinks = [
-    {
-        id: 1,
-        name: "Soda",
-        nutrition: ["H"],
-        price: 4.4,
-    },
-    {
-        id: 2,
-        name: "Beer",
-        nutrition: [],
-        price: 5.4,
-    },
-];
+import { drinks } from "./drinks";
+import { FoodItem, PriceItem } from "./types";
+
 
 let guest = 1;
 const price = [20.2, 10.2];
 
 
 export async function createMenu() {
-    //get Food from Markus
-    // const meals = await [
-    //     {
-    //         name: "Burger",
-    //         nutrition: ["A", "B", "C"],
-    //     },
-    //     {
-    //         name: "Wiener Schnitzel",
-    //         nutrition: ["D", "E"],
-    //     },
-    // ];
-    //----------------------------------
 
     const response = await fetch("FoodPreparation:8085/meals");
     const meals = await response.json();
@@ -39,14 +16,14 @@ export async function createMenu() {
 }
 
 function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
-    let food: { id: number; name: string; nutrition: string[]; price: number; }[]  = [];
+    let food: FoodItem[]  = [];
 
-    foodNames.forEach((value, index) => {
+    foodNames.forEach((item, index) => {
         const idNumber = ++index;
-        const foodItem = {
+        const foodItem: FoodItem = {
             id: idNumber,
-            name: value.name,
-            nutrition: value.nutrition,
+            name: item.name,
+            nutrition: item.nutrition,
             price: price[index - 1],
         };
         food.push(foodItem);
@@ -58,23 +35,23 @@ function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
 
 export async function getMenuItemPrices() {
     const menu = await createMenu();
-    let foodPrices: { id: any; price: any; }[] = [];
-    let drinkPrices: { id: any; price: any; }[] = [];
+    let foodPrices: PriceItem[] = [];
+    let drinkPrices: PriceItem[] = [];
 
    
-    menu.food.forEach((value: { id: any; price: any; }) => {
+    menu.food.forEach((foodItem: PriceItem) => {
         const menuItem = {
-            id: value.id,
-            price: value.price
+            id: foodItem.id,
+            price: foodItem.price
         }
         foodPrices.push(menuItem);
         }
     );
 
-    menu.drinks.forEach((value: { id: any; price: any; }) => {
+    menu.drinks.forEach((drinkItem: PriceItem) => {
         const menuItem = {
-            id: value.id,
-            price: value.price
+            id: drinkItem.id,
+            price: drinkItem.price
         }
         drinkPrices.push(menuItem);
         }
