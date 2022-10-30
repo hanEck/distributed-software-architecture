@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: Delivery
+  description: |
+    Ensures that all ordered items are delivered to the guest and that they are registered for billing.
+  version: 1.0.0
+paths:
+  /orderInformation:
+    post:
+      summary: Forward information about the order
+      description: |
+        The order information received from the guest is forwarded to the 
+        assistance manager. 
+      requestBody:
+        required: true
+        content: 
+          application/json:
+            schema:
+              $ref: "#/components/schemas/orderInformation" 
+            examples:
+                DeliveryAndDrinksInformationForThreePeople:
+                  summary: Information about food & drinks for three persons
+                  value:
+                    {
+                      "guest": 2,
+                      "order": 1,
+                      "food" : [
+                            1,
+                            2,
+                            1
+                      ],
+                       "drink": [
+                            1,
+                            2,
+                            2
+                      ] 
+                    }  
+      responses:
+        "200":
+          description: Delivery and drinks information has been forwarded successfully
+          content:
+            application/json: 
+              schema:
+                $ref: "#/components/schemas/forwardingOrderInformationConfirmation"   
+        "400":
+          description: "The send message has an invalid JS in the body!"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage" 
+        "404":
+          description: "The send content is invalid"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: "Unknown meal for the given order"
+  /preparedNotification:
+    post:
+      summary: Send notification to assistant manager
+      description: |
+        When a food is prepared the assistant manager can be informed
+        via this endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/preparedNotification"
+            examples:
+              MealPreparedNotifcation:
+                summary: Notification about a specific meal within an order which has been prepared
+                value:
+                  {
+                    "order": 2,
+                    "food" : 1
+                  }  
+      responses:
+        "200":
+          description: Notification has been successfull
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/preparedNotificationConfirmation"
+        "400":
+          description: "The send message has an invalid JS in the body!"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: "The message body is invalid"
+        "404":
+          description: "The send content is invalid"
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: "Unknown meal for the given order"
+components:
+  schemas:
+    errorMessage:
+      type: string
+      maxLength: 256
+      description: A text message describing an error
+    identifier:
+      type: integer
+      minimum: 0
+    identifiers:
+      type: array
+      items: 
+        $ref: "#/components/schemas/identifier" 
+    orderInformation:
+      type: object
+      properties:
+        guest:
+          $ref: "#/components/schemas/identifier"
+        order:
+          $ref: "#/components/schemas/identifier"
+        food:
+          $ref: "#/components/schemas/identifiers"
+        drinks:
+          $ref: "#/components/schemas/identifiers"
+    forwardingOrderInformationConfirmation:
+      type: object
+      properties:
+        orderInformation:
+          description: Delivery Information for Guest 
+          $ref: "#/components/schemas/identifier" 
+    preparedNotification:
+      type: object
+      properties:
+        order: 
+          $ref: "#/components/schemas/identifier" 
+        meal:
+          $ref: "#/components/schemas/identifier" 
+    preparedNotificationConfirmation:
+      type: object
+      properties:
+        preparedNotification: 
+          description: Notification success
+          $ref: "#/components/schemas/identifier" 
