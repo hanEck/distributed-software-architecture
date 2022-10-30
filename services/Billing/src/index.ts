@@ -19,7 +19,19 @@ app.post<string, {guestId: string}, Bill | ErrorMessage>("/bills/:guestId", (req
 		return res.send("Guest was not provided");
 	}
 
-	const guestDelivery: ItemRegistration | undefined = billingService.deliveredItems.find(items => items.guest === guestId);
+    console.log(billingService.deliveredItems);
+    
+
+	const guestDelivery: ItemRegistration | undefined = billingService.deliveredItems.find(items => {
+        console.log(items.guest);
+        console.log(guestId);
+        
+        
+        return +items.guest === +guestId
+    });
+
+    console.log({guestDelivery});
+    
 
 	if (!guestDelivery) {
 		res.status(404);
@@ -35,7 +47,12 @@ app.post<string, {guestId: string}, Bill | ErrorMessage>("/bills/:guestId", (req
 
 	const bill = billingService.generateBill(guestDelivery);
 
-	res.status(200);
+    if (billingService.bills.find(bill => bill.order === guestDelivery.order)){
+        res.status(202);
+    } else {
+        res.status(200);
+    }
+
 	res.send(bill);
 });
 
@@ -71,7 +88,7 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 		return res.send("Bill was not provided");
 	}
 
-	const bill = billingService.bills.find(bill => bill.bill === billId);
+	const bill = billingService.bills.find(bill => +bill.bill === billId);
 
 	if (!bill) {
 		res.status(410);
@@ -98,16 +115,24 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 // Registers items as delivered, when they are delivered to a guest
 app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:guestId", (req, res) => {
-	const guestId = req.params.guestId;
+	const guestId = parseInt(req.params.guestId);
 	const body = req.body;
 	const { food, drinks } = body;
 
+    console.log("items received");
+    console.log(body);
+    
+
 	if (typeof guestId !== "number") {
+        console.log("No guest was specified");
+        
 		res.status(400);
 		return res.send("No guest was specified");
 	}
 
 	if (!food.length && !drinks.length) {
+        console.log("No items were specified for registration");
+        
 		res.status(416);
 		return res.send("No items were specified for registration");
 	}

@@ -10,32 +10,47 @@ export default class BillingService {
 
 	constructor() {
 		// just for testing
-		this.menu = menuMock;
+		// this.menu = menuMock;
 
-		/*this.getMenu()
-			.then(menu => this.menu = menu);*/
+		this.getMenu()
+			.then(menu => this.menu = menu);
 	}
 
 	private async getMenu(): Promise<Menu> {
 		// get menu from guest experience
 
-		const path = `${process.env.API_GUEST_EXPERIENCE || "GuestExperience"}:${process.env.PORT_GUEST_EXPERIENCE || "8081"}/prices`;
+		const path = `${process.env.API_GUEST_EXPERIENCE || "http://GuestExperience:8081"}/prices`;
 		const response = await fetch(path);
 		return await response.json();
 	}
 
 	generateBill(guestDelivery: ItemRegistration): Bill {
 		// generate a bill from the unpaid items left for a certain customer
+        
+        const billIndex = this.bills.findIndex(bill => bill.order === guestDelivery.order);
 
-		const newBill: Bill = {
-			bill: this.billIdCounter,
-			order: guestDelivery.order,
-			orderedDrinks: [],
-			orderedFood: [],
-			totalSum: 0
-		};
+        let newBill: Bill;
 
-		this.billIdCounter++;
+        // TODO: bills can pay multiple orders -> fix model
+        if (billIndex >= 0) {
+            newBill = {
+                bill: this.bills[billIndex].bill,
+                order: this.bills[billIndex].order,
+                orderedDrinks: [],
+                orderedFood: [],
+                totalSum: 0
+            };
+        } else {
+            newBill = {
+                bill: this.billIdCounter,
+                order: +guestDelivery.order,
+                orderedDrinks: [],
+                orderedFood: [],
+                totalSum: 0
+            };
+            this.billIdCounter++;
+        }
+
 
 		guestDelivery.drinks.forEach(id => {
 			const menuDrink = this.menu.drinks.find(drink => drink.id === id);
@@ -51,13 +66,18 @@ export default class BillingService {
 			newBill.totalSum += menuFood.price;
 		});
 
-		this.bills.push(newBill);
+        if (billIndex >= 0) {
+            this.bills.splice(billIndex, 1, newBill)
+        } else {
+            this.bills.push(newBill);
+        }
 
 		// copy bill to delete not needed property
 		const tempBill = { ...newBill };
 		delete tempBill.order;
+        
 
-		return tempBill;
+		return {...tempBill, totalSum: tempBill.totalSum};
 	}
 
 	getPaymentOption(amount: number): PAYMENT_METHOD[] {
@@ -76,6 +96,7 @@ export default class BillingService {
 		const billIndex = this.bills.findIndex(bill => bill.bill === billId);
 
 		const { order, orderedDrinks: paidDrinks, orderedFood: paidFood, totalSum } = this.bills[billIndex];
+        
 
 		// TODO: why is it called paidOrders and is an array? A bill will always only cover one order
 		const paidBill: PaidBill = {
@@ -87,6 +108,32 @@ export default class BillingService {
 			}],
 			totalSum
 		};
+
+        const deliveredItemsIndex = this.deliveredItems.findIndex(items => items.order === order)
+
+        const deliveredDrinks = this.deliveredItems[deliveredItemsIndex].drinks;
+
+        for( let i = 0; i < paidDrinks.length; i++) {
+            const drinkId = paidDrinks[i];
+            if(deliveredDrinks.includes(drinkId)) {
+                const index = deliveredDrinks.findIndex(drink => drinkId === drink)
+                deliveredDrinks.splice(index, 1);
+            }
+        }
+
+        const deliveredFood = this.deliveredItems[deliveredItemsIndex].food;
+
+        for( let i = 0; i < paidFood.length; i++) {
+            const foodId = paidFood[i];
+            if(deliveredFood.includes(foodId)) {
+                const index = deliveredFood.findIndex(food => foodId === food)
+                deliveredFood.splice(index, 1);
+            }
+        }
+
+        if (deliveredFood.length === 0 && deliveredDrinks.length === 0){
+            this.deliveredItems.splice(deliveredItemsIndex, 1)
+        }
 
 		this.bills.splice(billIndex, 1);
 
@@ -106,6 +153,7 @@ export default class BillingService {
 		} else {
 			this.deliveredItems.push(itemRegistration);
 		}
+        
 	}
 }
 

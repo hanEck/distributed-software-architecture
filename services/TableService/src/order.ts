@@ -1,30 +1,39 @@
-let orderNumber = 0;
+import fetch from "node-fetch";
 
-export async function order(req: { json: () => any; }){
-    const order = req.json();
+let orderNumber = 1;
+
+export async function processOrder(order: any){
     const highestOrder = await getFood(order);
-    return calculateWaitingTime(highestOrder);
+    await sendOrderToDelivery(order);
+    const waitingTime = calculateWaitingTime(highestOrder);
 
+    return { waitingTime, order: orderNumber - 1 }
 }
 
-async function sendOrderToDelivery(order: { guest?: number; food: any; drink?: number[]; }){
-    orderNumber++;
-    fetch("Delivery:8084/orderInformation", {
+async function sendOrderToDelivery(order: any){
+    const sentOrder = {
+        guest: order.guest, 
+        food: order.food, 
+        drinks: order.drinks || [], 
+        order: orderNumber
+    };
+    fetch("http://Delivery:8084/orderInformation", {
         method: "POST",
-        body: JSON.stringify({order, orderNumber}),
+        body: JSON.stringify(sentOrder),
         headers: {"Content-Type" : "application/json"}
     });
+    orderNumber++;
 }
 
-async function getFood(order: { guest?: number; food: any; drink?: number[]; }){
+async function getFood(order: { guest?: number; food: any; drink: number[]; }){
     //send food order to food preparation
     const foodOrder = await order.food;
     let highestOrder = 0;
 
     foodOrder.forEach((element: any) => {
-        fetch("FoodPreparation:8085/orderItem", {
+        fetch("http://FoodPreparation:8085/orderItem", {
             method: "POST",
-            body: JSON.stringify({id: element}),
+            body: JSON.stringify({id: element, order: orderNumber}),
             headers: {"Content-Type" : "application/json"}
         })
         .then(async (response) => {

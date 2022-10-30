@@ -71,14 +71,14 @@ export async function findOrder(preparedFood: PreparedFood) {
         guest.orders.find((order, indexOrder) => {
             if (order.order === preparedFood.order) {
                 itemIndices.push(indexGuest, indexOrder)
-                const mealResult = order.food.find((meal, indexMeal) => {
+                order.food.forEach((meal, indexMeal) => {
                     if (meal === preparedFood.food) {
                         itemIndices.push(indexMeal);
                         foodOrder = {
                             guest: guest.guest,
                             Order: {
                                 order: order.order,
-                                food: [mealResult],
+                                food: [meal],
                                 drinks: [] as number[]
                             }
                         }

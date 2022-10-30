@@ -27,7 +27,7 @@ export default class AssistantManager {
                     body: JSON.stringify(deliveryBody),
                     headers: { 'Content-Type': 'application/json' }
                 }).catch(()=>{
-                    console.log("Error: An issue occured by sending delivery to customeer!");
+                    console.log("Error: An issue occured by sending delivery to customer!");
                 })
 
         await this.registerDeliveryForBilling(delivery);
@@ -44,7 +44,8 @@ export default class AssistantManager {
         const deliveryBody = {
             guest: delivery.guest,
             food: delivery.Order.food,
-            drinks: delivery.Order.drinks
+            drinks: delivery.Order.drinks,
+            order: delivery.Order.order
         }
                 await fetch(url.href, {
                     method: 'POST',

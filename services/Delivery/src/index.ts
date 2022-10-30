@@ -20,9 +20,11 @@ app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, 
     const receivedInformation = req.body;
     const hasError = checkRequestBodyOrderInformation(receivedInformation)
     if (hasError[0]) {
+        console.log("hasError")
         res.status(404).send(hasError[1])
     }
     else {
+        console.log("noError")
         manageOrder(receivedInformation);
         res.status(200).send(hasError[1])
     }
@@ -35,6 +37,7 @@ app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, re
     const preparedFood = req.body;
     const hasError = checkRequestBodyPreparedNotification(preparedFood)
     const foundOrder = await findOrder(preparedFood);
+
     if (hasError[0]) {
         res.status(404).send(hasError[1]);
     }
