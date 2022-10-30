@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: FoodPreparation
+  description: |
+    Offers interaction with the food preparation(cook)
+  version: 1.0.0
+paths:
+  /meals:
+    get:
+      summary: Returns all food options with their nutrition information
+      description: |
+        Depending on the amount of the bill different payment options may be offered
+      responses:
+        "200":
+          description: Describes all meal options with their nutrition information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/foodOptions"
+              examples:
+                AvailableMeals:
+                  summary: Example of Foodoptions with nutritions
+                  value:
+                    [ 
+                      {
+                        "id": 1,
+                        "name": "Schnitzel",
+                        "nutrition" : ["A","C","D"]
+                      }, 
+                      {
+                        "id": 2,
+                        "name": "Knödel",
+                        "nutrition" : ["C","D"]
+                      },
+                    ]
+
+  /orderItem:
+    parameters:
+      - $ref: "#/components/parameters/itemParam"
+    post:
+      summary: orders specified MenuItem
+      description: |
+        Places an order for the specified MenuItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/placeOrder"
+            examples:
+              OrderMeal:
+                summary: Tells the cook to prepare an order with id 1
+                value:
+                  {
+                    "id": 1,
+                    "order": 1
+                  }
+      responses:
+        "202":
+          description: Order was succesfully placed with cook
+          content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/mealsBefore"
+                examples:
+                  OneMealInQueue:
+                    summary: one Meal is being prepared before the new order is prepared
+                    value:
+                      {
+                        "ordersBefore": 2
+                    }
+        "404":
+          description: The oredered meal does not exist
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: Please choose a meal from the menu
+        "410":
+          description: The bill is not open and was either paid or cancelled
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/errorMessage"
+              example: No payment for the bill required
+
+
+components:
+  parameters:
+    itemParam:
+      description: Identifier of a Menuitem in the restaurant
+      name: item
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/identifier"
+  schemas:
+    errorMessage:
+      type: string
+      maxLength: 256
+      description: A text message describing an error
+    identifier:
+      type: integer
+      minimum: 0
+      example: 1
+    foodOptions:
+      type: array
+      items:
+        $ref: "#/components/schemas/foodItem"
+    foodItem:
+      type: object
+      properties:
+        id:
+          $ref:  "#/components/schemas/identifier"
+        food:
+          $ref:  "#/components/schemas/identifier"
+        nutrition:
+          $ref:  "#/components/schemas/identifier"
+    mealsBefore:
+      type: integer
+      minimum: 0
+    placeOrder:
+      type: object
+      properties:
+        id:
+          $ref:  "#/components/schemas/identifier"
