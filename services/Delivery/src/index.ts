@@ -18,49 +18,46 @@ app.use((req, res, next) => {
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, res) => {
     const receivedInformation = req.body;
-    const hasError = checkRequestBodyOrderInformation(receivedInformation)
-    if (hasError[0]) {
-        console.log("hasError")
-        res.status(404).send(hasError[1])
+    const checkedMessageBodyResult = checkRequestBodyOrderInformation(receivedInformation)
+    if (checkedMessageBodyResult.hasError) {
+        res.status(404).send(checkedMessageBodyResult.errorMessage)
     }
     else {
-        console.log("noError")
         manageOrder(receivedInformation);
-        res.status(200).send(hasError[1])
+        res.status(200).send(checkedMessageBodyResult.errorMessage)
     }
 })
-
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 
-//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
+//////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
 app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, res) => {
     const preparedFood = req.body;
-    const hasError = checkRequestBodyPreparedNotification(preparedFood)
+    const checkedMessageBodyResult = checkRequestBodyPreparedNotification(preparedFood)
     const foundOrder = await findOrder(preparedFood);
 
-    if (hasError[0]) {
-        res.status(404).send(hasError[1]);
+    if (checkedMessageBodyResult.hasError) {
+        res.status(404).send(checkedMessageBodyResult.errorMessage);
     }
     else if (!foundOrder) {
         res.status(404).send(`The prepared meal ${preparedFood.food} does not exist on the order with the id ${preparedFood.order}`);
     }
     else {
-        res.status(200).send(hasError[1]);
+        res.status(200).send(checkedMessageBodyResult.errorMessage);
     }
 })
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
-//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
+//////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
 
-//////////////////////////////////////Helper methods////////////////////////////////////////////////////////////
+//////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////
 function checkRequestBodyOrderInformation(receivedBody: ReceivedOrderInformation) {
     if (!receivedBody.guest) {
-        return [true, "Error: Guest number is missing!"];
+        return { hasError: true, errorMessage: "Error: Guest number is missing!" };
     }
     else if (!receivedBody.order) {
-        return [true, "Error: Order number is missing!"];
+        return { hasError: true, errorMessage: "Error: Order number is missing!" };
     }
     else if (
         (receivedBody.food.length === 0 &&
@@ -69,23 +66,23 @@ function checkRequestBodyOrderInformation(receivedBody: ReceivedOrderInformation
         !receivedBody.drinks
 
     ) {
-        return [true, "Error: The send order does not contain any drink or food or one of the fields is missing!"]
+        return { hasError: true, errorMessage: "Error: The send order does not contain any drink or food or one of the fields is missing!" }
 
     }
     else {
-        return [false, "Success:The information have been send!"]
+        return { hasError: false, errorMessage: "Success:The information have been send!" }
     }
 }
 
 function checkRequestBodyPreparedNotification(receivedBody: PreparedFood) {
     if (!receivedBody.food) {
-        return [true, "Error: Received body does not have the required field food!"]
+        return {hasError:true, errorMessage:"Error: Received body does not have the required field food!"}
     }
     else if (!receivedBody.order) {
-        return [true, "Error: Received body does not have the required field order!"]
+        return {hasError:true,errorMessage: "Error: Received body does not have the required field order!"}
     }
     else {
-        return [false, "Success: The notification has been send successfully!"];
+        return {hasError:false, errorMessage:"Success: The notification has been send successfully!"};
     }
 }
-//////////////////////////////////////Helper methods////////////////////////////////////////////////////////////
+//////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////
