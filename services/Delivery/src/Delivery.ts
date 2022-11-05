@@ -62,18 +62,19 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
 }
 //////////////////////////////////////receivedOrderInformation endpoint//////////////////////////////////////////////
 
-//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
+//////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
 export async function findOrder(preparedFood: PreparedFood) {
     let foodOrder: GuestWithOrder;
     //Helper collection to find the processed item for removal
-    let itemIndices: number[] = [];
+    let itemIndices: any = {}
     guestOrders.forEach((guest, indexGuest) => {
         guest.orders.find((order, indexOrder) => {
             if (order.order === preparedFood.order) {
-                itemIndices.push(indexGuest, indexOrder)
+                itemIndices['guestId'] = indexGuest;
+                itemIndices["orderId"] = indexOrder;
                 order.food.forEach((meal, indexMeal) => {
                     if (meal === preparedFood.food) {
-                        itemIndices.push(indexMeal);
+                        itemIndices["mealId"] = indexMeal
                         foodOrder = {
                             guest: guest.guest,
                             Order: {
@@ -110,16 +111,16 @@ function removeDrinksFromOrder(orderNumber: number) {
 //Method will remove specific food item
 //Furthermore the collections the item is included in (order/guest) will also get
 //removed when they are empty
-function removeDeliverdFood(indices: number[]) {
-    guestOrders[indices[0]].orders[indices[1]].food.splice(indices[2], 1);
-    if (guestOrders[indices[0]].orders[indices[1]].food.length === 0) {
-        guestOrders[indices[0]].orders.splice(indices[1], 1);
-        if (guestOrders[indices[0]].orders.length === 0) {
-            guestOrders.splice(indices[0], 1)
+function removeDeliverdFood(indices: any) {
+    guestOrders[indices.guestId].orders[indices.orderId].food.splice(indices.mealId, 1);
+    if (guestOrders[indices.guestId].orders[indices.orderId].food.length === 0) {
+        guestOrders[indices.guestId].orders.splice(indices.orderId, 1);
+        if (guestOrders[indices.guestId].orders.length === 0) {
+            guestOrders.splice(indices.guestId, 1)
         }
     }
 }
-//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////
+//////////////////////////////////////preparedNotification endpoint/////////////////////////////////////////////////////
 
 /////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////////
 //The loop within this Method iterates until a manager is available (manuel stop)
@@ -128,7 +129,7 @@ async function getAvailableManager(): Promise<AssistantManager> {
     let checkingResult;
 
     while (keepLooping) {
-        checkingResult = await checkForManager();
+        checkingResult = await loopForAvailableManager();
         if (checkingResult) {
             break;
         }
@@ -137,7 +138,7 @@ async function getAvailableManager(): Promise<AssistantManager> {
 }
 
 //Method checks if there is a manager availbale and if not calls a delay followed by returning an undefined
-async function checkForManager() {
+async function loopForAvailableManager() {
     for (let assistantManager of assistantManagers) {
         if (!assistantManager.isDelivering) {
             return assistantManager

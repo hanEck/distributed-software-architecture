@@ -21,14 +21,16 @@ export default class AssistantManager {
         }
 
         this.isDelivering = true;
+        console.log(deliveryBody);
 
-                await fetch(url.href, {
-                    method: 'POST',
-                    body: JSON.stringify(deliveryBody),
-                    headers: { 'Content-Type': 'application/json' }
-                }).catch(()=>{
-                    console.log("Error: An issue occured by sending delivery to customer!");
-                })
+
+        await fetch(url.href, {
+            method: 'POST',
+            body: JSON.stringify(deliveryBody),
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(() => {
+            console.log("Error: An issue occured by sending delivery to customer!");
+        })
 
         await this.registerDeliveryForBilling(delivery);
         this.isDelivering = false;
@@ -47,13 +49,14 @@ export default class AssistantManager {
             drinks: delivery.Order.drinks,
             order: delivery.Order.order
         }
-                await fetch(url.href, {
-                    method: 'POST',
-                    body: JSON.stringify(deliveryBody),
-                    headers: { 'Content-Type': 'application/json' }
-                }).catch(()=>{
-                    console.log("Error: An issue occured by sending delivery to billing!");
-                })
+        console.log(deliveryBody);
+        await fetch(url.href, {
+            method: 'POST',
+            body: JSON.stringify(deliveryBody),
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(() => {
+            console.log("Error: An issue occured by sending delivery to billing!");
+        })
     }
 
 }
