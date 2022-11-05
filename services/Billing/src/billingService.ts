@@ -1,8 +1,6 @@
 import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
 import fetch from "node-fetch";
 
-// TODO: refactoring
-
 export default class BillingService {
 	bills: Bill[] = [];
 	guestOrders: GuestOrders[] = [];
@@ -23,7 +21,6 @@ export default class BillingService {
 			const response = await fetch(path);
 			this.menu = await response.json();
 		} catch (e) {
-			// TODO: refactor
 			const tryAgainIn = 1000; // in ms
 			await new Promise((resolve) => {
 				setTimeout(resolve, tryAgainIn);
@@ -43,49 +40,24 @@ export default class BillingService {
 
 		if (billIndex >= 0) {
 			const { bill, guest, orders } = this.bills[billIndex];
+			const ordersCopy = orders.map(order => ( {
+				order: order.order,
+				food: [...order.food],
+				drinks: [...order.drinks]
+			} ));
 
-			newBill = {
-				bill,
-				guest,
-				orders: orders.map(order => ( { order: order.order, food: [...order.food], drinks: [...order.drinks] } )),
-				totalSum: 0
-			};
+			newBill = { bill, guest, orders: ordersCopy, totalSum: 0 };
 		} else {
-			newBill = {
-				bill: this.billIdCounter,
-				guest: guestDelivery.guest,
-				orders: [],
-				totalSum: 0
-			};
+			newBill = { bill: this.billIdCounter, guest: guestDelivery.guest, orders: [], totalSum: 0 };
+
 			this.billIdCounter++;
 		}
 
-		guestDelivery.orders.forEach(order => {
-			const existingOrder = newBill.orders?.find(billOrder => billOrder.order === order.order);
+		// add orders to the bill
+		this.addFoodOrderToBill(guestDelivery, newBill);
 
-			if (existingOrder) {
-				// push items in existing order
-				existingOrder.food = [...order.food];
-				existingOrder.drinks = [...order.drinks];
-			} else {
-				// just push the new order
-				newBill.orders.push({ order: order.order, food: [...order.food], drinks: [...order.drinks] });
-			}
-		});
-
-		newBill.orders.forEach(order => {
-			order.drinks.forEach(id => {
-				const menuDrink = this.menu.drinks.find(drink => drink.id === id);
-
-				newBill.totalSum += menuDrink.price;
-			});
-
-			order.food.forEach(id => {
-				const menuFood = this.menu.food.find(food => food.id === id);
-
-				newBill.totalSum += menuFood.price;
-			});
-		});
+		// calculate totalSum
+		this.calculateTotalSum(newBill);
 
 		if (billIndex >= 0) {
 			this.bills.splice(billIndex, 1, newBill);
@@ -103,6 +75,35 @@ export default class BillingService {
 		};
 	}
 
+	private addFoodOrderToBill(guestDelivery: GuestOrders, newBill: Bill) {
+		guestDelivery.orders.forEach(order => {
+			const existingOrder = newBill.orders?.find(billOrder => billOrder.order === order.order);
+
+			if (existingOrder) {
+				existingOrder.food = [...order.food];
+				existingOrder.drinks = [...order.drinks];
+			} else {
+				newBill.orders.push({ order: order.order, food: [...order.food], drinks: [...order.drinks] });
+			}
+		});
+	}
+
+	private calculateTotalSum(newBill: Bill) {
+		newBill.orders.forEach(order => {
+			order.drinks.forEach(id => {
+				const menuDrink = this.menu.drinks.find(drink => drink.id === id);
+
+				newBill.totalSum += menuDrink.price;
+			});
+
+			order.food.forEach(id => {
+				const menuFood = this.menu.food.find(food => food.id === id);
+
+				newBill.totalSum += menuFood.price;
+			});
+		});
+	}
+
 	getPaymentOption(amount: number): PAYMENT_METHOD[] {
 		// return the available payment options depending on the price
 
@@ -118,21 +119,31 @@ export default class BillingService {
 
 		const billIndex = this.bills.findIndex(bill => bill.bill === billId);
 		const bill = this.bills[billIndex];
+		const paidOrders = bill.orders.flatMap(order => ( { order: order.order, paidDrinks: [...order.drinks], paidFood: [...order.food] } ));
 
 		const paidBill: PaidBill = {
 			bill: billId,
-			paidOrders: bill.orders.flatMap(order => ( { order: order.order, paidDrinks: [...order.drinks], paidFood: [...order.food] } )),
+			paidOrders,
 			totalSum: bill.totalSum
 		};
 
-
 		// remove items from delivered items
-		const deliveredItemsIndex = this.guestOrders.findIndex(items => +items.guest === +bill.guest);
+		const { deliveredItemsIndex, deliveredOrders } = this.removeBillItemsFromDeliveredItems(bill);
 
+		// remove empty orders
+		this.guestOrders[deliveredItemsIndex].orders = deliveredOrders.filter(order => order.food.length > 0 || order.drinks.length > 0);
+
+		// remove bill
+		this.bills.splice(billIndex, 1);
+
+		return paidBill;
+	}
+
+	private removeBillItemsFromDeliveredItems(bill: Bill) {
+		const deliveredItemsIndex = this.guestOrders.findIndex(items => +items.guest === +bill.guest);
 		const deliveredOrders = this.guestOrders[deliveredItemsIndex].orders;
 
-
-		deliveredOrders.forEach((order, index) => {
+		deliveredOrders.forEach(order => {
 			const billOrder = bill.orders.find(orderObj => +orderObj.order === +order.order);
 
 			if (billOrder) {
@@ -152,13 +163,7 @@ export default class BillingService {
 
 			}
 		});
-
-		this.guestOrders[deliveredItemsIndex].orders = deliveredOrders.filter(order => order.food.length > 0 || order.drinks.length > 0);
-
-		// remove bill
-		this.bills.splice(billIndex, 1);
-
-		return paidBill;
+		return { deliveredItemsIndex, deliveredOrders };
 	}
 
 	registerDeliveredItems(itemRegistration: ItemRegistration) {
@@ -173,11 +178,9 @@ export default class BillingService {
 			if (guestOrder) {
 				guestOrder.food = guestOrder.food.concat(food);
 				guestOrder.drinks = guestOrder.drinks.concat(drinks);
-
 			} else {
 				guestDelivery.orders.push({ food, drinks, order });
 			}
-
 		} else {
 			this.guestOrders.push({ guest, orders: [{ food, drinks, order }] });
 		}

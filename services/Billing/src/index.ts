@@ -20,7 +20,6 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 
 	const guestDelivery: GuestOrders | undefined = billingService.guestOrders.find(items => +items.guest === +guestId);
 
-
 	if (!guestDelivery) {
 		res.status(404);
 		return res.send("Guest with the specified id could not be found");
