@@ -16,9 +16,10 @@ async function sendOrderToDelivery(order: Order){
     const sentOrder = {
         guest: order.guest, 
         food: order.food, 
-        drinks: order.drink || [], 
+        drinks: order.drinks || [], 
         order: orderNumber
     };
+    
     fetch("http://Delivery:8084/orderInformation", {
         method: "POST",
         body: JSON.stringify(sentOrder),

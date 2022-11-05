@@ -21,8 +21,6 @@ export default class AssistantManager {
         }
 
         this.isDelivering = true;
-        console.log(deliveryBody);
-
 
         await fetch(url.href, {
             method: 'POST',
@@ -49,7 +47,6 @@ export default class AssistantManager {
             drinks: delivery.Order.drinks,
             order: delivery.Order.order
         }
-        console.log(deliveryBody);
         await fetch(url.href, {
             method: 'POST',
             body: JSON.stringify(deliveryBody),
