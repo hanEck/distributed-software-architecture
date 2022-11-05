@@ -5,11 +5,11 @@ services:
   Customer:
     image: mcr.microsoft.com/dotnet/sdk:6.0
     ports:
-      - 5000:5000
+      - 8080:8080
     volumes:
       - ./customer:/var/www/html:rw
     environment:
-      - ASPNETCORE_URLS=http://+:5000
+      - ASPNETCORE_URLS=http://+:8080
       - APIs__GuestExperience=http://GuestExperience:4010/
       - APIS__TableService=http://TableService:4010/
       - APIS__Billing=http://Billing:4010/

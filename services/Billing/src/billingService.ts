@@ -1,83 +1,106 @@
-import { Bill, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
+import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
 import fetch from "node-fetch";
-import { menuMock } from "./mocks";
+
+// TODO: refactoring
 
 export default class BillingService {
 	bills: Bill[] = [];
-	deliveredItems: ItemRegistration[] = [];
+	guestOrders: GuestOrders[] = [];
 	menu: Menu;
 	billIdCounter: number = 1;
 
 	constructor() {
-		// just for testing
-		// this.menu = menuMock;
-
-		this.getMenu()
-			.then(menu => this.menu = menu);
+		( async () => {
+			await this.getMenu();
+		} )();
 	}
 
-	private async getMenu(): Promise<Menu> {
+	private async getMenu(): Promise<void> {
 		// get menu from guest experience
 
 		const path = `${process.env.API_GUEST_EXPERIENCE || "http://GuestExperience:8081"}/prices`;
-		const response = await fetch(path);
-		return await response.json();
+		try {
+			const response = await fetch(path);
+			this.menu = await response.json();
+		} catch (e) {
+			// TODO: refactor
+			const tryAgainIn = 1000; // in ms
+			await new Promise((resolve) => {
+				setTimeout(resolve, tryAgainIn);
+			});
+			await this.getMenu();
+		}
+
+		return;
 	}
 
-	generateBill(guestDelivery: ItemRegistration): Bill {
+	generateBill(guestDelivery: GuestOrders): GuestBill {
 		// generate a bill from the unpaid items left for a certain customer
-        
-        const billIndex = this.bills.findIndex(bill => bill.order === guestDelivery.order);
 
-        let newBill: Bill;
+		const billIndex = this.bills.findIndex(bill => bill.guest === guestDelivery.guest);
 
-        // TODO: bills can pay multiple orders -> fix model
-        if (billIndex >= 0) {
-            newBill = {
-                bill: this.bills[billIndex].bill,
-                order: this.bills[billIndex].order,
-                orderedDrinks: [],
-                orderedFood: [],
-                totalSum: 0
-            };
-        } else {
-            newBill = {
-                bill: this.billIdCounter,
-                order: +guestDelivery.order,
-                orderedDrinks: [],
-                orderedFood: [],
-                totalSum: 0
-            };
-            this.billIdCounter++;
-        }
+		let newBill: Bill;
 
+		if (billIndex >= 0) {
+			const { bill, guest, orders } = this.bills[billIndex];
 
-		guestDelivery.drinks.forEach(id => {
-			const menuDrink = this.menu.drinks.find(drink => drink.id === id);
+			newBill = {
+				bill,
+				guest,
+				orders: orders.map(order => ( { order: order.order, food: [...order.food], drinks: [...order.drinks] } )),
+				totalSum: 0
+			};
+		} else {
+			newBill = {
+				bill: this.billIdCounter,
+				guest: guestDelivery.guest,
+				orders: [],
+				totalSum: 0
+			};
+			this.billIdCounter++;
+		}
 
-			newBill.orderedDrinks.push(menuDrink.id);
-			newBill.totalSum += menuDrink.price;
+		guestDelivery.orders.forEach(order => {
+			const existingOrder = newBill.orders?.find(billOrder => billOrder.order === order.order);
+
+			if (existingOrder) {
+				// push items in existing order
+				existingOrder.food = [...order.food];
+				existingOrder.drinks = [...order.drinks];
+			} else {
+				// just push the new order
+				newBill.orders.push({ order: order.order, food: [...order.food], drinks: [...order.drinks] });
+			}
 		});
 
-		guestDelivery.food.forEach(id => {
-			const menuFood = this.menu.food.find(food => food.id === id);
+		newBill.orders.forEach(order => {
+			order.drinks.forEach(id => {
+				const menuDrink = this.menu.drinks.find(drink => drink.id === id);
 
-			newBill.orderedFood.push(menuFood.id);
-			newBill.totalSum += menuFood.price;
+				newBill.totalSum += menuDrink.price;
+			});
+
+			order.food.forEach(id => {
+				const menuFood = this.menu.food.find(food => food.id === id);
+
+				newBill.totalSum += menuFood.price;
+			});
 		});
 
-        if (billIndex >= 0) {
-            this.bills.splice(billIndex, 1, newBill)
-        } else {
-            this.bills.push(newBill);
-        }
+		if (billIndex >= 0) {
+			this.bills.splice(billIndex, 1, newBill);
+		} else {
+			this.bills.push(newBill);
+		}
 
-		// copy bill to delete not needed property
-		const tempBill = { ...newBill };
-		delete tempBill.order;
-        
+		const { bill, orders, totalSum } = newBill;
 
-		return {...tempBill, totalSum: tempBill.totalSum};
+		return {
+			bill,
+			orderedDrinks: orders.flatMap(order => order.drinks),
+			orderedFood: orders.flatMap(order => order.food),
+			totalSum: totalSum
+		};
 	}
 
 	getPaymentOption(amount: number): PAYMENT_METHOD[] {
@@ -94,47 +117,45 @@ export default class BillingService {
 		// register a new payment and mark items as paid
 
 		const billIndex = this.bills.findIndex(bill => bill.bill === billId);
+		const bill = this.bills[billIndex];
 
-		const { order, orderedDrinks: paidDrinks, orderedFood: paidFood, totalSum } = this.bills[billIndex];
-        
-
-		// TODO: why is it called paidOrders and is an array? A bill will always only cover one order
 		const paidBill: PaidBill = {
 			bill: billId,
-			paidOrders: [{
-				order,
-				paidDrinks,
-				paidFood
-			}],
-			totalSum
+			paidOrders: bill.orders.flatMap(order => ( { order: order.order, paidDrinks: [...order.drinks], paidFood: [...order.food] } )),
+			totalSum: bill.totalSum
 		};
 
-        const deliveredItemsIndex = this.deliveredItems.findIndex(items => items.order === order)
 
-        const deliveredDrinks = this.deliveredItems[deliveredItemsIndex].drinks;
+		// remove items from delivered items
+		const deliveredItemsIndex = this.guestOrders.findIndex(items => +items.guest === +bill.guest);
 
-        for( let i = 0; i < paidDrinks.length; i++) {
-            const drinkId = paidDrinks[i];
-            if(deliveredDrinks.includes(drinkId)) {
-                const index = deliveredDrinks.findIndex(drink => drinkId === drink)
-                deliveredDrinks.splice(index, 1);
-            }
-        }
+		const deliveredOrders = this.guestOrders[deliveredItemsIndex].orders;
 
-        const deliveredFood = this.deliveredItems[deliveredItemsIndex].food;
 
-        for( let i = 0; i < paidFood.length; i++) {
-            const foodId = paidFood[i];
-            if(deliveredFood.includes(foodId)) {
-                const index = deliveredFood.findIndex(food => foodId === food)
-                deliveredFood.splice(index, 1);
-            }
-        }
+		deliveredOrders.forEach((order, index) => {
+			const billOrder = bill.orders.find(orderObj => +orderObj.order === +order.order);
 
-        if (deliveredFood.length === 0 && deliveredDrinks.length === 0){
-            this.deliveredItems.splice(deliveredItemsIndex, 1)
-        }
+			if (billOrder) {
+				billOrder.drinks.forEach(drinkId => {
+					if (order.drinks.includes(drinkId)) {
+						const index = order.drinks.findIndex(drink => drinkId === drink);
+						order.drinks.splice(index, 1);
+					}
+				});
 
+				billOrder.food.forEach(foodId => {
+					if (order.food.includes(foodId)) {
+						const index = order.food.findIndex(food => foodId === food);
+						order.food.splice(index, 1);
+					}
+				});
+
+			}
+		});
+
+		this.guestOrders[deliveredItemsIndex].orders = deliveredOrders.filter(order => order.food.length > 0 || order.drinks.length > 0);
+
+		// remove bill
 		this.bills.splice(billIndex, 1);
 
 		return paidBill;
@@ -143,17 +164,24 @@ export default class BillingService {
 	registerDeliveredItems(itemRegistration: ItemRegistration) {
 		// register items which are delivered to a guest
 
-		const { guest, food, drinks } = itemRegistration;
+		const { guest, order, food, drinks } = itemRegistration;
 
-		const guestItems = this.deliveredItems.find(items => items.guest === guest);
+		const guestDelivery = this.guestOrders.find(items => +items.guest === +guest);
 
-		if (guestItems) {
-			guestItems.food = guestItems.food.concat(food);
-			guestItems.drinks = guestItems.drinks.concat(drinks);
+		if (guestDelivery) {
+			const guestOrder = guestDelivery.orders.find(deliveryOrder => +deliveryOrder.order === +order);
+			if (guestOrder) {
+				guestOrder.food = guestOrder.food.concat(food);
+				guestOrder.drinks = guestOrder.drinks.concat(drinks);
+
+			} else {
+				guestDelivery.orders.push({ food, drinks, order });
+			}
+
 		} else {
-			this.deliveredItems.push(itemRegistration);
+			this.guestOrders.push({ guest, orders: [{ food, drinks, order }] });
 		}
-        
+
 	}
 }
 
