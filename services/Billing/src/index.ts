@@ -1,9 +1,8 @@
 import express = require("express");
-import { Bill, BillPayment, ErrorMessage, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
+import { BillPayment, ErrorMessage, GuestBill, GuestOrders, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
 import BillingService from "./billingService";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
-const myTargetConfiguration = process.env.MY_TARGET_CONFIGURATION || "http://google.com";
 
 const app = express();
 app.use(express.json());
@@ -11,7 +10,7 @@ app.use(express.json());
 const billingService = new BillingService();
 
 // Generates the bill for a guest with all unpaid but delivered items
-app.post<string, {guestId: string}, Bill | ErrorMessage>("/bills/:guestId", (req, res) => {
+app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId", (req, res) => {
 	const guestId = parseInt(req.params.guestId);
 
 	if (!guestId) {
@@ -19,41 +18,27 @@ app.post<string, {guestId: string}, Bill | ErrorMessage>("/bills/:guestId", (req
 		return res.send("Guest was not provided");
 	}
 
-    console.log(billingService.deliveredItems);
-    
-
-	const guestDelivery: ItemRegistration | undefined = billingService.deliveredItems.find(items => {
-        console.log(items.guest);
-        console.log(guestId);
-        
-        
-        return +items.guest === +guestId
-    });
-
-    console.log({guestDelivery});
-    
+	const guestDelivery: GuestOrders | undefined = billingService.guestOrders.find(items => +items.guest === +guestId);
 
 	if (!guestDelivery) {
 		res.status(404);
 		return res.send("Guest with the specified id could not be found");
 	}
 
-	if (!guestDelivery.drinks.length && !guestDelivery.food.length) {
+	if (!guestDelivery.orders.length) {
 		res.status(404);
 		return res.send("No billable items found");
 	}
 
-	// TODO: response with code 202
+	if (billingService.bills.find(bill => bill.guest === guestId)) {
+		res.status(202);
+	} else {
+		res.status(200);
+	}
 
-	const bill = billingService.generateBill(guestDelivery);
+	const guestBill = billingService.generateBill(guestDelivery);
 
-    if (billingService.bills.find(bill => bill.order === guestDelivery.order)){
-        res.status(202);
-    } else {
-        res.status(200);
-    }
-
-	res.send(bill);
+	res.send(guestBill);
 });
 
 // Returns the payment options for a bill
@@ -119,20 +104,12 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 	const body = req.body;
 	const { food, drinks } = body;
 
-    console.log("items received");
-    console.log(body);
-    
-
 	if (typeof guestId !== "number") {
-        console.log("No guest was specified");
-        
 		res.status(400);
 		return res.send("No guest was specified");
 	}
 
 	if (!food.length && !drinks.length) {
-        console.log("No items were specified for registration");
-        
 		res.status(416);
 		return res.send("No items were specified for registration");
 	}

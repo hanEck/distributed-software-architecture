@@ -6,7 +6,7 @@ let deliveryId = 0;
 export default class AssistantManager {
     isDelivering = false;
     async sendOrderItems(delivery: GuestWithOrder) {
-        const originUrl = process.env.API_CUSTOMER || "Customer:5000";
+        const originUrl = process.env.API_CUSTOMER || "Customer:8080";
         const urlParams = {
             guest: delivery.guest,
             order: delivery.Order.order

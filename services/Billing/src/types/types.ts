@@ -4,11 +4,23 @@ export interface PaidOrder {
 	paidFood: number[];
 }
 
-export interface Bill {
+export interface Order {
+	order: number; // id of the order
+	drinks: number[];
+	food: number[];
+}
+
+export interface GuestBill {
 	bill: number; // id of the bill
-	order: number;
 	orderedDrinks: number[];
 	orderedFood: number[];
+	totalSum: number; // in Euros
+}
+
+export interface Bill {
+	bill: number; // id of the bill
+	guest: number; // id of the guest
+	orders: Order[];
 	totalSum: number; // in Euros
 }
 
@@ -28,6 +40,11 @@ export interface ItemRegistration {
 	order: number; // id of the order
 	food: number[];
 	drinks: number[];
+}
+
+export interface GuestOrders {
+	guest: number; // id of the guest
+	orders: Order[];
 }
 
 export enum PAYMENT_METHOD {
