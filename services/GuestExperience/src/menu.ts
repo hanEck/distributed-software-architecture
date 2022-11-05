@@ -1,19 +1,17 @@
 import fetch from "node-fetch";
 import { drinks } from "./drinks";
-import { FoodItem, PriceItem } from "./types";
+import { FoodItem, PriceItem } from "./types/types";
 
 
-let guest = 1;
-const price = [20.2, 10.2];
+let guestId = 0;
+const price = [20.2, 10.2, 5.3];
 
 
 export async function createMenu() {
-
     const response = await fetch("http://FoodPreparation:8085/meals");
     const meals = await response.json();
-
     const food = addPriceToFood(meals);
-    return {guest: guest++, food: food, drinks: drinks};
+    return {guest: guestId++, food: food, drinks: drinks};
 }
 
 function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {

@@ -12,5 +12,11 @@ export const cookableMeals = [
         "name": "Wiener Schnitzel",
         "nutrition": [ NUTRITION.D, NUTRITION.E],
         "ingredients": ["Meat", "Potato", "Egg", "Breadcrumbs"]
+    },
+    {
+        "id": 3,
+        "name": "Pommes",
+        "nutrition": [ NUTRITION.A, NUTRITION.E],
+        "ingredients": ["Potato"]
     }
 ];
