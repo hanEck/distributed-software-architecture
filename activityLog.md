@@ -24,5 +24,15 @@
 - Defined openAPI specification
 - Create APIs
 - Implemented business logic
+- merge all services into master 
+- get docker running with all services
+- test communications between services
+- fix existing bugs and merge
+- final testing
+
+## Problems
+
+- testing fetch without docker running
+- http protocol was missing in docker.compose
 
  
