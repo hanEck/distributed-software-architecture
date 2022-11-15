@@ -62,6 +62,8 @@ services:
       PORT: 8084
       API_CUSTOMER: http://Customer:8080
       API_BILLING: http://Billing:8083
+      SLOW_DELIVERY: 0.1
+      SLOW_DELIVERY_DELAY: 60000
     command: bash -c "npm install && npm run start"
     networks:
       - restaurant-kata
