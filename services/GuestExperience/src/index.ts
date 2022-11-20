@@ -1,5 +1,6 @@
 import express = require("express");
 import {createMenu, getMenuItemPrices} from "./menu";
+import { getPossibleDelay } from "./utils";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
@@ -11,6 +12,7 @@ app.get("/menu", async (req, res) => {
 });
 
 app.get("/prices", async (req, res) => {
+    await getPossibleDelay();
     const prices = await getMenuItemPrices()
     res.json(prices);
 })

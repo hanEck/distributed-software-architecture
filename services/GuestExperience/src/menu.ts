@@ -8,10 +8,15 @@ const price = [20.2, 10.2, 5.3];
 
 
 export async function createMenu() {
-    const response = await fetch("http://FoodPreparation:8085/meals");
-    const meals = await response.json();
-    const food = addPriceToFood(meals);
-    return {guest: guestId++, food: food, drinks: drinks};
+    try {
+        const response = await fetch("http://FoodPreparation:8085/meals");
+        const meals = await response.json();
+        const food = addPriceToFood(meals);
+        return {guest: guestId++, food: food, drinks: drinks};
+    } catch (error) {
+        console.log("Manager: Communication with the cook did not work!");
+    }
+    
 }
 
 function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
@@ -37,7 +42,6 @@ export async function getMenuItemPrices() {
     let foodPrices: PriceItem[] = [];
     let drinkPrices: PriceItem[] = [];
 
-   
     menu.food.forEach((foodItem: PriceItem) => {
         const menuItem = {
             id: foodItem.id,
