@@ -30,6 +30,7 @@ services:
     environment:
       PORT: 8085
       API_DELIVERY: http://Delivery:8084
+      BUSY_COOK: 0.1
     working_dir: /services
     command: bash -c "npm install && npm run start"
     networks:
