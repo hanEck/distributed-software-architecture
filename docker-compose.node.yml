@@ -21,19 +21,20 @@ services:
         networks:
             - restaurant-kata
 
-    FoodPreparation:
-        image: node:16
-        ports:
-            - "8085:8085"
-        volumes:
-            - ./services/FoodPreparation:/services
-        environment:
-            PORT: 8085
-            API_DELIVERY: http://Delivery:8084
-        working_dir: /services
-        command: bash -c "npm install && npm run start"
-        networks:
-            - restaurant-kata
+  FoodPreparation:
+    image: node:16
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./services/FoodPreparation:/services
+    environment:
+      PORT: 8085
+      API_DELIVERY: http://Delivery:8084
+      BUSY_COOK: 0.1
+    working_dir: /services
+    command: bash -c "npm install && npm run start"
+    networks:
+      - restaurant-kata
 
     GuestExperience:
         image: node:16
