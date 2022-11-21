@@ -30,7 +30,7 @@ services:
       environment:
         PORT: 8085
         API_DELIVERY: http://Delivery:8084
-        BUSY_COOK: 0.1
+        BUSY_COOK: 0.0
       working_dir: /services
       command: bash -c "npm install && npm run start"
       networks:
@@ -48,7 +48,7 @@ services:
         environment:
             PORT: 8081
             API_FOODPREPERATION: http://FoodPreparation:8085
-            OVERWORKED_MANAGER: 0.1
+            OVERWORKED_MANAGER: 1
             OVERWORKED_MANAGER_DELAY: 60
         command: bash -c "npm install && npm run start"
         networks:
@@ -65,7 +65,7 @@ services:
         PORT: 8084
         API_CUSTOMER: http://Customer:8080
         API_BILLING: http://Billing:8083
-        SLOW_DELIVERY: 0.1
+        SLOW_DELIVERY: 0.0
         SLOW_DELIVERY_DELAY: 60000
       command: bash -c "npm install && npm run start"
       networks:
@@ -83,7 +83,7 @@ services:
         environment:
             PORT: 8083
             API_GUEST_EXPERIENCE: http://GuestExperience:8081
-            BUSY_THRESHOLD: 0.1
+            BUSY_THRESHOLD: 0.0
         command: bash -c "npm install && npm run start"
         networks:
             - restaurant-kata
@@ -102,4 +102,4 @@ services:
             PORT: 8082
             API_DELIVERY: http://Delivery:8084
             API_FOODPREPERATION: http://FoodPreparation:8085
-            FORGETTABLE WAITER_RATIO: 0.1
+            FORGETTABLE WAITER_RATIO: 0.0
