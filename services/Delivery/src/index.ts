@@ -2,6 +2,7 @@ import express = require("express");
 import bodyParser = require("body-parser");
 import { PreparedFood, ReceivedOrderInformation } from './interfaces'
 import { manageOrder, findOrder } from './Delivery'
+import { Resolver } from "dns";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
@@ -16,8 +17,9 @@ app.use((req, res, next) => {
 });
 
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
-app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", (req, res) => {
+app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
     const receivedInformation = req.body;
+    await checkForSmokingBreak();
     const checkedMessageBodyResult = checkRequestBodyOrderInformation(receivedInformation)
     if (checkedMessageBodyResult.hasError) {
         res.status(404).send(checkedMessageBodyResult.errorMessage)
@@ -76,13 +78,26 @@ function checkRequestBodyOrderInformation(receivedBody: ReceivedOrderInformation
 
 function checkRequestBodyPreparedNotification(receivedBody: PreparedFood) {
     if (!receivedBody.food) {
-        return {hasError:true, errorMessage:"Error: Received body does not have the required field food!"}
+        return { hasError: true, errorMessage: "Error: Received body does not have the required field food!" }
     }
     else if (!receivedBody.order) {
-        return {hasError:true,errorMessage: "Error: Received body does not have the required field order!"}
+        return { hasError: true, errorMessage: "Error: Received body does not have the required field order!" }
     }
     else {
-        return {hasError:false, errorMessage:"Success: The notification has been send successfully!"};
+        return { hasError: false, errorMessage: "Success: The notification has been send successfully!" };
+    }
+}
+
+
+async function checkForSmokingBreak() {
+    const randomNumber = Math.random();
+    const chanceForSlowDelivery = parseFloat(process.env.SLOW_DELIVERY) || 0.1
+    if (randomNumber < chanceForSlowDelivery) {
+        const smokeBreakDuration = parseInt(process.env.SLOW_DELIVERY_DELAY) || 3000
+        return new Promise((resolve) => setTimeout(resolve, smokeBreakDuration))
+    }
+    else {
+        return new Promise((resolve) => resolve(0))
     }
 }
 //////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////
