@@ -82,5 +82,3 @@ export enum NUTRITION {
 }
 
 export type ErrorMessage = string;
-
-export const BUSY_THRESHOLD = 0.1;

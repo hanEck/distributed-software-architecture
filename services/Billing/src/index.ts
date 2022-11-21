@@ -1,8 +1,9 @@
 import express = require("express");
-import { BillPayment, BUSY_THRESHOLD, ErrorMessage, GuestBill, GuestOrders, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
+import { BillPayment, ErrorMessage, GuestBill, GuestOrders, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
 import BillingService from "./billingService";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
+const BUSY_THRESHOLD = parseFloat(process.env.BUSY_THRESHOLD) || 0.1;
 
 const app = express();
 app.use(express.json());
@@ -107,6 +108,7 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 	const amIBusy = Math.random();
 	if (amIBusy <= BUSY_THRESHOLD) {
 		res.status(500);
+        console.log("Cashier: I'm busy at the moment, please try again later");      
 		return res.send("Sorry I'm busy!");
 	}
 

@@ -4,7 +4,7 @@ import {Order} from "./types";
 
 let orderNumber = 1;
 const averageWaitingTimePerGuest = 4;
-const forgetfulnessThreshold = 0.1;
+const forgetfulnessThreshold = parseFloat(process.env.FORGETTABLE_WAITER_RATIO) || 0.1;
 
 export async function processOrder(order: Order){
     const highestOrderPosition = await sendFoodToFoodPreparation(order);
@@ -38,7 +38,7 @@ async function sendFoodToFoodPreparation(order: Order){
         let requestCount = 1;
         if(iForgot<=forgetfulnessThreshold){
             requestCount = 2;
-            console.log("Error added!");
+            console.log("Duplicated order is being sent");
         } 
         while (requestCount>0){
             const response = await fetch("http://FoodPreparation:8085/orderItem", {

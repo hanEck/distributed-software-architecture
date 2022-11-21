@@ -93,6 +93,7 @@ async function checkForSmokingBreak() {
     const randomNumber = Math.random();
     const chanceForSlowDelivery = parseFloat(process.env.SLOW_DELIVERY) || 0.1
     if (randomNumber < chanceForSlowDelivery) {
+        console.log("Delivery: The delivery person is on a smoking break!");
         const smokeBreakDuration = parseInt(process.env.SLOW_DELIVERY_DELAY) || 3000
         return new Promise((resolve) => setTimeout(resolve, smokeBreakDuration))
     }

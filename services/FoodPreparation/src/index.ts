@@ -18,7 +18,8 @@ const foodPreparation = new FoodPreparation();
 
 app.get<any, void, any>("/meals", (req,res) => {
     const cookableMeals = foodPreparation.getCookableMeals();
-    if(Math.random() > propability) {
+    if(Math.random() < propability) {
+        console.log("Food Preparation: Cooking is busy right now");       
         res.status(505).send({ status: 505, message: "Cook is busy" });
     } else {
         res.status(200).json(cookableMeals);

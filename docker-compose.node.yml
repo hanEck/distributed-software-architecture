@@ -21,20 +21,20 @@ services:
         networks:
             - restaurant-kata
 
-  FoodPreparation:
-    image: node:16
-    ports:
-      - "8085:8085"
-    volumes:
-      - ./services/FoodPreparation:/services
-    environment:
-      PORT: 8085
-      API_DELIVERY: http://Delivery:8084
-      BUSY_COOK: 0.1
-    working_dir: /services
-    command: bash -c "npm install && npm run start"
-    networks:
-      - restaurant-kata
+    FoodPreparation:
+      image: node:16
+      ports:
+        - "8085:8085"
+      volumes:
+        - ./services/FoodPreparation:/services
+      environment:
+        PORT: 8085
+        API_DELIVERY: http://Delivery:8084
+        BUSY_COOK: 0.1
+      working_dir: /services
+      command: bash -c "npm install && npm run start"
+      networks:
+        - restaurant-kata
 
     GuestExperience:
         image: node:16
@@ -54,22 +54,22 @@ services:
         networks:
             - restaurant-kata
 
-  Delivery:
-    image: node:16
-    ports:
-      - "8084:8084"
-    volumes:
-      - ./services/Delivery:/services
-    working_dir: /services
-    environment:
-      PORT: 8084
-      API_CUSTOMER: http://Customer:8080
-      API_BILLING: http://Billing:8083
-      SLOW_DELIVERY: 0.1
-      SLOW_DELIVERY_DELAY: 60000
-    command: bash -c "npm install && npm run start"
-    networks:
-      - restaurant-kata
+    Delivery:
+      image: node:16
+      ports:
+        - "8084:8084"
+      volumes:
+        - ./services/Delivery:/services
+      working_dir: /services
+      environment:
+        PORT: 8084
+        API_CUSTOMER: http://Customer:8080
+        API_BILLING: http://Billing:8083
+        SLOW_DELIVERY: 0.1
+        SLOW_DELIVERY_DELAY: 60000
+      command: bash -c "npm install && npm run start"
+      networks:
+        - restaurant-kata
 
     Billing:
         image: node:16
@@ -83,6 +83,7 @@ services:
         environment:
             PORT: 8083
             API_GUEST_EXPERIENCE: http://GuestExperience:8081
+            BUSY_THRESHOLD: 0.1
         command: bash -c "npm install && npm run start"
         networks:
             - restaurant-kata
@@ -101,3 +102,4 @@ services:
             PORT: 8082
             API_DELIVERY: http://Delivery:8084
             API_FOODPREPERATION: http://FoodPreparation:8085
+            FORGETTABLE WAITER_RATIO: 0.1
