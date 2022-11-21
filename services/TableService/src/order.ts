@@ -32,15 +32,14 @@ async function sendOrderToDelivery(order: Order){
 async function sendFoodToFoodPreparation(order: Order){
     const foodOrder = order.food;
     let highestOrderPosition = 0;
-
-    for(const foodId of foodOrder){
-        const iForgot = Math.random();
-        let requestCount = 1;
-        if(iForgot<=forgetfulnessThreshold){
-            requestCount = 2;
-            console.log("Duplicated order is being sent");
-        } 
-        while (requestCount>0){
+    const iForgot = Math.random();
+    let requestCount = 1;
+    if(iForgot<=forgetfulnessThreshold){
+        requestCount = 2;
+        console.log("Duplicated order is being sent");
+    } 
+    while (requestCount>0){
+        for(const foodId of foodOrder){
             const response = await fetch("http://FoodPreparation:8085/orderItem", {
                 method: "POST",
                 body: JSON.stringify({id: foodId, order: orderNumber}),
@@ -50,8 +49,8 @@ async function sendFoodToFoodPreparation(order: Order){
             if(orderPosition > highestOrderPosition){
                 highestOrderPosition = orderPosition;
             }
-            requestCount--;
-        }   
+        }
+        requestCount--;   
     }
     return highestOrderPosition;
 }
