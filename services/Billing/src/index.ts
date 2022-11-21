@@ -1,5 +1,5 @@
 import express = require("express");
-import { BillPayment, ErrorMessage, GuestBill, GuestOrders, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
+import { BillPayment, BUSY_THRESHOLD, ErrorMessage, GuestBill, GuestOrders, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
 import BillingService from "./billingService";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
@@ -103,6 +103,12 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 	const guestId = parseInt(req.params.guestId);
 	const body = req.body;
 	const { food, drinks } = body;
+
+	const amIBusy = Math.random();
+	if (amIBusy <= BUSY_THRESHOLD) {
+		res.status(500);
+		return res.send("Sorry I'm busy!");
+	}
 
 	if (typeof guestId !== "number") {
 		res.status(400);

@@ -3,6 +3,7 @@ import FoodPreparation from "./FoodPreperation";
 import { CookableMeal, OrderItem } from "./Types/types";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
+const propability = parseFloat(process.env.BUSY_COOK) || 0.1;
 const app = express();
 app.use(express.json());
 app.use((err: Error, req: any, res: any, next: any) => {
@@ -15,9 +16,13 @@ app.use((err: Error, req: any, res: any, next: any) => {
 
 const foodPreparation = new FoodPreparation();
 
-app.get<any, void, CookableMeal[]>("/meals", (req,res) => {
+app.get<any, void, any>("/meals", (req,res) => {
     const cookableMeals = foodPreparation.getCookableMeals();
-    res.status(200).json(cookableMeals);
+    if(Math.random() > propability) {
+        res.status(505).send({ status: 505, message: "Cook is busy" });
+    } else {
+        res.status(200).json(cookableMeals);
+    }
 });
 
 app.post<any, OrderItem, string>("/orderItem", (req ,res) => {
