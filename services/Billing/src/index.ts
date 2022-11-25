@@ -19,6 +19,12 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 		return res.send("Guest was not provided");
 	}
 
+	// TODO: check how to handle this better
+	if (!billingService.menu) {
+		res.status(425);
+		return res.send("Sorry I don't have the menu. Please try again later.");
+	}
+
 	const guestDelivery: GuestOrders | undefined = billingService.guestOrders.find(items => +items.guest === +guestId);
 
 	if (!guestDelivery) {
