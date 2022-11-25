@@ -106,6 +106,13 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 	const body = req.body;
 	const { food, drinks } = body;
 
+	const amIBusy = Math.random();
+	if (amIBusy <= BUSY_THRESHOLD) {
+		res.status(500);
+		console.log("Cashier: I'm busy at the moment, please try again later");
+		return res.send("Sorry I'm busy!");
+	}
+
 	if (!deliveryId) {
 		res.status(400);
 		return res.send("Please send a delivery Id to identify the delivery.");
@@ -117,13 +124,6 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 	}
 
 	billingService.deliveryIds.push(deliveryId);
-
-	const amIBusy = Math.random();
-	if (amIBusy <= BUSY_THRESHOLD) {
-		res.status(500);
-		console.log("Cashier: I'm busy at the moment, please try again later");
-		return res.send("Sorry I'm busy!");
-	}
 
 	if (typeof guestId !== "number") {
 		res.status(400);
