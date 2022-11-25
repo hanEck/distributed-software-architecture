@@ -8,6 +8,7 @@ const app = express();
 
 app.get("/menu", async (req, res) => {
     const menu = await createMenu()
+    console.log("Manager:" + menu);
     res.json(menu);
 });
 

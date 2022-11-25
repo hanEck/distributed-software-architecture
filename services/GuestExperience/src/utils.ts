@@ -1,4 +1,4 @@
-function delay(timeoutInMS: number) {
+export function delay(timeoutInMS: number) {
     return new Promise<void>((resolve) => {
         setTimeout(() => resolve(), timeoutInMS);
     });
@@ -12,5 +12,9 @@ export async function getPossibleDelay() {
         console.log("Manager: I'm working... I need more time")
         await delay(delayTime*1000)
     }
+}
+
+export function isEmptyObject (obj: any) {
+    return JSON.stringify(obj) === '{}';
 }
 
