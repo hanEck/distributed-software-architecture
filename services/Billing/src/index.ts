@@ -102,13 +102,26 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 // Registers items as delivered, when they are delivered to a guest
 app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:guestId", (req, res) => {
 	const guestId = parseInt(req.params.guestId);
+	const deliveryId = Number(req.header("deliveryId"));
 	const body = req.body;
 	const { food, drinks } = body;
+
+	if (!deliveryId) {
+		res.status(400);
+		return res.send("Please send a delivery Id to identify the delivery.");
+	}
+
+	if (billingService.deliveryIds.includes(deliveryId)) {
+		res.status(400);
+		return res.send("I already received this delivery.");
+	}
+
+	billingService.deliveryIds.push(deliveryId);
 
 	const amIBusy = Math.random();
 	if (amIBusy <= BUSY_THRESHOLD) {
 		res.status(500);
-        console.log("Cashier: I'm busy at the moment, please try again later");      
+		console.log("Cashier: I'm busy at the moment, please try again later");
 		return res.send("Sorry I'm busy!");
 	}
 

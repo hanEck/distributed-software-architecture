@@ -2,6 +2,7 @@ import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT
 import fetch from "node-fetch";
 
 export default class BillingService {
+	deliveryIds: number[] = [];
 	bills: Bill[] = [];
 	guestOrders: GuestOrders[] = [];
 	menu: Menu;
