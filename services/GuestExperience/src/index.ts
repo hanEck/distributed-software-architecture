@@ -16,7 +16,7 @@ app.get("/prices", async (req, res) => {
     await getPossibleDelay();
     const prices = await getMenuItemPrices()
     
-    if(!prices){
+    if(!prices?.drinks?.length || !prices?.food?.length){
         res.status(404);
         return res.send()
     }
