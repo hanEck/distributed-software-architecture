@@ -63,12 +63,12 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
 //////////////////////////////////////receivedOrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
-export async function findOrder(preparedFood: PreparedFood) {
+export async function findOrder(preparedFood: PreparedFood) { 
     let foodOrder: GuestWithOrder;
     //Helper collection to find the processed item for removal
     let itemIndices: any = {}
-    guestOrders.forEach((guest, indexGuest) => {
-        guest.orders.find((order, indexOrder) => {
+    guestOrders.forEach((guest, indexGuest) => {       
+        guest.orders.find((order, indexOrder) => {   
             if (order.order === preparedFood.order) {
                 itemIndices['guestId'] = indexGuest;
                 itemIndices["orderId"] = indexOrder;
@@ -88,10 +88,11 @@ export async function findOrder(preparedFood: PreparedFood) {
             }
         });
     })
+    
     if (foodOrder) {
+        removeDeliverdFood(itemIndices);
         const availableManager = await getAvailableManager();
         await availableManager.sendOrderItems(foodOrder);
-        removeDeliverdFood(itemIndices);
         return foodOrder;
     }
 
@@ -112,11 +113,12 @@ function removeDrinksFromOrder(orderNumber: number) {
 //Furthermore the collections the item is included in (order/guest) will also get
 //removed when they are empty
 function removeDeliverdFood(indices: any) {
-    guestOrders[indices.guestId].orders[indices.orderId].food.splice(indices.mealId, 1);
+guestOrders[indices.guestId].orders[indices.orderId].food.splice(indices.mealId, 1);
     if (guestOrders[indices.guestId].orders[indices.orderId].food.length === 0) {
         guestOrders[indices.guestId].orders.splice(indices.orderId, 1);
         if (guestOrders[indices.guestId].orders.length === 0) {
             guestOrders.splice(indices.guestId, 1)
+            
         }
     }
 }

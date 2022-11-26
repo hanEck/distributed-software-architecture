@@ -18,6 +18,7 @@ export default class AssistantManager {
             food: delivery.Order.food,
             drinks: delivery.Order.drinks
         }
+        
 
         this.isDelivering = true;
 
