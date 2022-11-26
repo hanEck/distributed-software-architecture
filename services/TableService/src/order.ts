@@ -1,7 +1,6 @@
 import { Console } from "console";
 import fetch from "node-fetch";
 import { Order } from "./types";
-import { isEmptyObject } from "./utils";
 
 let orderNumber = 1;
 let request_id = 1;
@@ -35,9 +34,10 @@ async function sendOrderToDelivery(order: Order) {
 async function sendFoodToFoodPreparation(order: Order) {
   const foodOrder = order.food;
 
-  if (isEmptyObject(foodOrder)) {
+  if (!foodOrder?.length) {
     console.log("ONLY DRINKS WERE ORDERED");
-    return;
+    // waiting time should be 0
+    return 0;
   }
 
   let highestOrderPosition = 0;
