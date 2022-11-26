@@ -1,11 +1,17 @@
 import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
 import fetch from "node-fetch";
+import { delay, getFibonacciSequence } from "./utils";
+
+const MAX_RETRY_COUNT = 5;
 
 export default class BillingService {
+	deliveryIds: number[] = [];
 	bills: Bill[] = [];
 	guestOrders: GuestOrders[] = [];
 	menu: Menu;
-	billIdCounter: number = 1;
+	billIdCounter = 1;
+	retryCounter = MAX_RETRY_COUNT;
+	fibonacciSeq = getFibonacciSequence(this.retryCounter);
 
 	constructor() {
 		( async () => {
@@ -18,17 +24,34 @@ export default class BillingService {
 
 		const path = `${process.env.API_GUEST_EXPERIENCE || "http://GuestExperience:8081"}/prices`;
 		try {
-			const response = await fetch(path);
+			console.log("Cashier: Trying to get the menu from Manager.");
+
+			const response = await fetch(path, { timeout: 5000 });
 			this.menu = await response.json();
+
+			console.log("Cashier: Got the menu from Manager.");
 		} catch (e) {
-			const tryAgainIn = 1000; // in ms
-			await new Promise((resolve) => {
-				setTimeout(resolve, tryAgainIn);
-			});
-			await this.getMenu();
+			return await this.handleGetMenuErrors();
+		}
+	}
+
+	private async handleGetMenuErrors() {
+		if (this.retryCounter > 0) {
+			console.log("Cashier: Couldn't get menu from Manager. I'll ask again in a few seconds.");
+
+			const fibNum = this.fibonacciSeq[MAX_RETRY_COUNT - this.retryCounter];
+			const retryIn = fibNum * 1000; // in ms
+			await delay(retryIn);
+		} else {
+			console.log("Cashier: Seems like the manager is very busy. I'll wait a bit longer and ask again in a minute.");
+
+			const retryIn = 2 * 60 * 1000; // in ms
+			await delay(retryIn);
+			this.retryCounter = MAX_RETRY_COUNT;
 		}
 
-		return;
+		this.retryCounter--;
+		return this.getMenu();
 	}
 
 	generateBill(guestDelivery: GuestOrders): GuestBill {
@@ -117,6 +140,8 @@ export default class BillingService {
 	registerPayment(billId: number) {
 		// register a new payment and mark items as paid
 
+		console.log("Cashier: I received a payment");
+
 		const billIndex = this.bills.findIndex(bill => bill.bill === billId);
 		const bill = this.bills[billIndex];
 		const paidOrders = bill.orders.flatMap(order => ( { order: order.order, paidDrinks: [...order.drinks], paidFood: [...order.food] } ));
@@ -176,12 +201,15 @@ export default class BillingService {
 		if (guestDelivery) {
 			const guestOrder = guestDelivery.orders.find(deliveryOrder => +deliveryOrder.order === +order);
 			if (guestOrder) {
+				console.log("Cashier: I'm adding items to an existing order");
 				guestOrder.food = guestOrder.food.concat(food);
 				guestOrder.drinks = guestOrder.drinks.concat(drinks);
 			} else {
+				console.log("Cashier: I'm adding a new order to an existing Guest with id " + guest);
 				guestDelivery.orders.push({ food, drinks, order });
 			}
 		} else {
+			console.log("Cashier: I'm adding a new guest with his first order");
 			this.guestOrders.push({ guest, orders: [{ food, drinks, order }] });
 		}
 
