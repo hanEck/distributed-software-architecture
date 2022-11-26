@@ -140,6 +140,8 @@ export default class BillingService {
 	registerPayment(billId: number) {
 		// register a new payment and mark items as paid
 
+		console.log("Cashier: I received a payment");
+
 		const billIndex = this.bills.findIndex(bill => bill.bill === billId);
 		const bill = this.bills[billIndex];
 		const paidOrders = bill.orders.flatMap(order => ( { order: order.order, paidDrinks: [...order.drinks], paidFood: [...order.food] } ));
@@ -199,12 +201,15 @@ export default class BillingService {
 		if (guestDelivery) {
 			const guestOrder = guestDelivery.orders.find(deliveryOrder => +deliveryOrder.order === +order);
 			if (guestOrder) {
+				console.log("Cashier: I'm adding items to an existing order");
 				guestOrder.food = guestOrder.food.concat(food);
 				guestOrder.drinks = guestOrder.drinks.concat(drinks);
 			} else {
+				console.log("Cashier: I'm adding a new order to an existing Guest with id " + guest);
 				guestDelivery.orders.push({ food, drinks, order });
 			}
 		} else {
+			console.log("Cashier: I'm adding a new guest with his first order");
 			this.guestOrders.push({ guest, orders: [{ food, drinks, order }] });
 		}
 

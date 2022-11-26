@@ -16,12 +16,14 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 
 	if (!guestId) {
 		res.status(400);
+		console.log("Cashier: The guest id was not provided so I don't know who the bill is for");
 		return res.send("Guest was not provided");
 	}
 
 	// TODO: check how to handle this better
 	if (!billingService.menu) {
 		res.status(425);
+		console.log("Cashier: I don't have the menu and can't calculate the total sum for the bill.");
 		return res.send("Sorry I don't have the menu. Please try again later.");
 	}
 
@@ -29,17 +31,21 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 
 	if (!guestDelivery) {
 		res.status(404);
-		return res.send("Guest with the specified id could not be found");
+		console.log("Cashier: I couldn't find the guest with the specified id");
+		return res.send("Guest with the specified id has not been registered");
 	}
 
 	if (!guestDelivery.orders.length) {
 		res.status(404);
+		console.log("Cashier: There are no items that need to be paid");
 		return res.send("No billable items found");
 	}
 
 	if (billingService.bills.find(bill => bill.guest === guestId)) {
+		console.log("Cashier: I'm updating a bill");
 		res.status(202);
 	} else {
+		console.log("Cashier: I'm generating a bill");
 		res.status(200);
 	}
 
@@ -54,6 +60,7 @@ app.get<string, {billId: string}, PAYMENT_METHOD[] | ErrorMessage>("/payment/:bi
 
 	if (!billId) {
 		res.status(400);
+		console.log("Cashier: I can't find the bill if no id is provided");
 		return res.send("Bill was not provided");
 	}
 
@@ -61,9 +68,11 @@ app.get<string, {billId: string}, PAYMENT_METHOD[] | ErrorMessage>("/payment/:bi
 
 	if (!bill) {
 		res.status(404);
+		console.log("Cashier: I couldn't find the bill");
 		return res.send("Bill was not found");
 	}
 
+	console.log("Cashier: I'm getting the payment options'");
 	const paymentMethods = billingService.getPaymentOption(bill.totalSum);
 
 	res.status(200);
@@ -77,6 +86,7 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	if (!billId) {
 		res.status(400);
+		console.log("Cashier: I can't find the bill if no id is provided");
 		return res.send("Bill was not provided");
 	}
 
@@ -84,6 +94,7 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	if (!bill) {
 		res.status(410);
+		console.log("Cashier: The requested bill is already paid");
 		return res.send("No payment for the bill required");
 	}
 
@@ -91,11 +102,13 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	if (!possiblePaymentMethods.includes(billPayment.paymentMethod)) {
 		res.status(406);
+		console.log("Cashier: The used payment method isn't supported. Please try again.");
 		return res.send("Please use a supported payment method for this bill");
 	}
 
 	if (billPayment.amount < bill.totalSum) {
 		res.status(416);
+		console.log("Cashier: You didn't give me enough money to cover the bill");
 		return res.send(`Please pay at least ${bill.totalSum} euros to cover this bill`);
 	}
 
@@ -121,11 +134,13 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 
 	if (!deliveryId) {
 		res.status(400);
+		console.log("Cashier: I need a delivery Id to identify the delivery");
 		return res.send("Please send a delivery Id to identify the delivery.");
 	}
 
 	if (billingService.deliveryIds.includes(deliveryId)) {
 		res.status(400);
+		console.log("Cashier: I already registered this delivery");
 		return res.send("I already received this delivery.");
 	}
 
@@ -133,14 +148,17 @@ app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:g
 
 	if (typeof guestId !== "number") {
 		res.status(400);
+		console.log("Cashier: There was no guest provided to register the items to");
 		return res.send("No guest was specified");
 	}
 
 	if (!food.length && !drinks.length) {
 		res.status(416);
+		console.log("Cashier: You need to send me items if I should register something");
 		return res.send("No items were specified for registration");
 	}
 
+	console.log("Cashier: I'm registering a new delivery");
 	billingService.registerDeliveredItems({ ...body, guest: guestId });
 
 	res.status(200);
