@@ -20,6 +20,8 @@ app.use((req, res, next) => {
 app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
     const receivedInformation = req.body;
     await checkForSmokingBreak();
+    console.log("Delivery: The delivery person is back from the smoking break!" + receivedInformation.order);
+    
     const checkedMessageBodyResult = checkRequestBodyOrderInformation(receivedInformation)
     if (checkedMessageBodyResult.hasError) {
         res.status(404).send(checkedMessageBodyResult.errorMessage)
@@ -34,6 +36,7 @@ app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async 
 //////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
 app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, res) => {
     const preparedFood = req.body;
+    await checkForSmokingBreak(false);
     const checkedMessageBodyResult = checkRequestBodyPreparedNotification(preparedFood)
     const foundOrder = await findOrder(preparedFood);
 
@@ -88,17 +91,23 @@ function checkRequestBodyPreparedNotification(receivedBody: PreparedFood) {
     }
 }
 
-
-async function checkForSmokingBreak() {
+let waitingTime = 0;
+let smokeBreak: NodeJS.Timeout;
+async function checkForSmokingBreak(fromTableService: boolean = true) {
     const randomNumber = Math.random();
     const chanceForSlowDelivery = parseFloat(process.env.SLOW_DELIVERY) || 0.1
     if (randomNumber < chanceForSlowDelivery) {
-        console.log("Delivery: The delivery person is on a smoking break!");
-        const smokeBreakDuration = parseInt(process.env.SLOW_DELIVERY_DELAY) || 3000
-        return new Promise((resolve) => setTimeout(resolve, smokeBreakDuration))
+        if(waitingTime === 0 && fromTableService) {
+            console.log("Delivery: Sorry, the Assistant Manager are doing a tactical smoking break!");
+            waitingTime = parseInt(process.env.SLOW_DELIVERY_DELAY) || 3000;
+            smokeBreak = setInterval(() => {
+                waitingTime -= 10;
+                if (waitingTime === 0) {
+                    clearInterval(smokeBreak);
+                }
+            } ,10)
+        }
     }
-    else {
-        return new Promise((resolve) => resolve(0))
-    }
+    return new Promise((resolve) => setTimeout(resolve, waitingTime))
 }
 //////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////

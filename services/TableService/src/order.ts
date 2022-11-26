@@ -58,11 +58,13 @@ async function sendFoodToFoodPreparation(order: Order) {
       if (orderPosition > highestOrderPosition) {
         highestOrderPosition = orderPosition;
       }
-      console.log("THIS IS THE ORDER ID:" + request_id);
+      request_id++;
+    }
+    if(requestCount === 2) {
+        request_id = request_id - foodOrder.length;
     }
     requestCount--;
   }
-  request_id++;
   return highestOrderPosition;
 }
 
