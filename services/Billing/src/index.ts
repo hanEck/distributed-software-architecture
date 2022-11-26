@@ -20,9 +20,8 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 		return res.send("Guest was not provided");
 	}
 
-	// TODO: check how to handle this better
 	if (!billingService.menu) {
-		res.status(425);
+		res.status(404);
 		console.log("Cashier: I don't have the menu and can't calculate the total sum for the bill.");
 		return res.send("Sorry I don't have the menu. Please try again later.");
 	}
