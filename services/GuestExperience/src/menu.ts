@@ -1,11 +1,11 @@
 import fetch from "node-fetch";
 import { drinks } from "./drinks";
-import { FoodItem, PriceItem } from "./types/types";
-import {delay, isEmptyObject} from "./utils";
+import { Menu, MenuItem, PriceItem } from "./types/types";
+import { delay, isEmptyObject } from "./utils";
 
 
-let guestId = 0;
-let menu = {};
+let guestId = 1;
+let menu: Menu | undefined = undefined;
 const price = [20.2, 10.2, 5.3];
 
 let currentRetry = 0;
@@ -19,6 +19,7 @@ export async function createMenu(): Promise<any> {
         currentRetry = 0;
         console.log("Manager: Communication worked!!!")
         menu = {guest: guestId++, food: food, drinks: drinks}
+        console.log("Manager: " + guestId);
         return menu;
     } catch (error) {
         console.log("Manager: Communication with the cook did not work!");
@@ -42,11 +43,11 @@ function checkCache() {
 }
 
 function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
-    let food: FoodItem[]  = [];
+    let food: MenuItem[]  = [];
 
     foodNames.forEach((item, index) => {
         const idNumber = ++index;
-        const foodItem: FoodItem = {
+        const foodItem: MenuItem = {
             id: idNumber,
             name: item.name,
             nutrition: item.nutrition,
@@ -59,8 +60,7 @@ function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
     return food;
 }
 
-export async function getMenuItemPrices() {
-        const menu = await createMenu();
+export async function getMenuItemPrices(): Promise<{food: PriceItem[], drinks: PriceItem[]} | undefined> {
         let foodPrices: PriceItem[] = [];
         let drinkPrices: PriceItem[] = [];
 

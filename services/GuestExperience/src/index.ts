@@ -15,6 +15,12 @@ app.get("/menu", async (req, res) => {
 app.get("/prices", async (req, res) => {
     await getPossibleDelay();
     const prices = await getMenuItemPrices()
+    
+    if(!prices){
+        res.status(404);
+        return res.send()
+    }
+
     res.json(prices);
 })
 
