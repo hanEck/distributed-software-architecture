@@ -4,12 +4,16 @@ import { Menu, MenuItem, PriceItem } from "./types/types";
 import { delay, isEmptyObject } from "./utils";
 
 
-let guestId = 1;
+let guestId = 0;
 let menu: Menu | undefined = undefined;
 const price = [20.2, 10.2, 5.3];
 
 let currentRetry = 0;
 const maxRetry = 3;
+
+createMenu()
+.then(newMenu => menu = newMenu)
+.catch(() => menu = undefined)
 
 export async function createMenu(): Promise<any> {
     try {
@@ -63,6 +67,8 @@ function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
 export async function getMenuItemPrices(): Promise<{food: PriceItem[], drinks: PriceItem[]} | undefined> {
         let foodPrices: PriceItem[] = [];
         let drinkPrices: PriceItem[] = [];
+
+        if (!menu) return undefined;
 
         menu?.food.forEach((foodItem: PriceItem) => {
             const menuItem = {

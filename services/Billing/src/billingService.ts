@@ -45,7 +45,7 @@ export default class BillingService {
 		} else {
 			console.log("Cashier: Seems like the manager is very busy. I'll wait a bit longer and ask again in a minute.");
 
-			const retryIn = 2 * 60 * 1000; // in ms
+			const retryIn = 60 * 1000; // in ms
 			await delay(retryIn);
 			this.retryCounter = MAX_RETRY_COUNT;
 		}
