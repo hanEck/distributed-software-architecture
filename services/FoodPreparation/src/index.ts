@@ -1,6 +1,7 @@
 import express = require("express");
 import FoodPreparation from "./FoodPreperation";
 import { CookableMeal, OrderItem } from "./Types/types";
+import Idempotency from "./Utils/Idempotency";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const propability = parseFloat(process.env.BUSY_COOK) || 0.1;
@@ -15,6 +16,7 @@ app.use((err: Error, req: any, res: any, next: any) => {
 });
 
 const foodPreparation = new FoodPreparation();
+const idempotencyPattern = new Idempotency();
 
 app.get<any, void, any>("/meals", (req,res) => {
     const cookableMeals = foodPreparation.getCookableMeals();
@@ -27,15 +29,19 @@ app.get<any, void, any>("/meals", (req,res) => {
 });
 
 app.post<any, OrderItem, string>("/orderItem", (req ,res) => {
-    const {id, order} = req.body;
+    const {request_id,id, order} = req.body;
     if(id === undefined || order === undefined) {
         res.status(400).send("You tried to submit an empty order");
     } 
-    const ordersInQueue: string = foodPreparation.takeOrder(id,order);
-    if(!ordersInQueue) {
-        res.status(404).send("No Meal found under this id");
+    if(idempotencyPattern.checkMessage(request_id)) {
+        const ordersInQueue = foodPreparation.takeOrder(id,order);
+        if(!ordersInQueue) {
+            res.status(404).send("No Meal found under this id");
+        } else {
+            res.status(200).send(ordersInQueue);
+        }
     } else {
-        res.status(200).send(ordersInQueue);
+        res.status(200).send(foodPreparation.ordersInPreparation.toString());
     }
 });
 

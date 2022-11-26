@@ -33,6 +33,8 @@ paths:
                         "nutrition" : ["C","D"]
                       },
                     ]
+        "500":
+          description: Cook is currently not available
 
   /orderItem:
     parameters:
@@ -52,6 +54,7 @@ paths:
                 summary: Tells the cook to prepare an order with id 1
                 value:
                   {
+                    "request_id": 1,
                     "id": 1,
                     "order": 1
                   }
