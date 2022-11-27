@@ -73,6 +73,22 @@
 My service had a problem with multiple orders, as I mentioned above. I noticed in an earlier implementation that I never return a 202 status code for an updated bill, which is defined in the openAPI definition. The requirements for updating a bill were not clear for me in the beginning, until we tested. This resulted in a lot of code rewriting, model adjustments and refactoring.
 
 ### Delivery
+#### Approach
+1. Create Open Api document for Delivery
+2. First documentation of "orderInformation" and "preparedNotification" endpoint
+3. Create a Delivery Service in the project
+4. Implementation of endpoints
+5. Implementation of data processing for received order information and prepared notification
+6. Exchange with Billing(Johannes) about post request to endpoint
+   - Add parameter to requests
+7. First merging of all Services
+   - included testing session where minor bugs in Delivery were fixed
+8. Refactoring of code after merge tests
+9. Final merge for first Assignment
+
+#### Problems
+- Changes in endpoint leaded to minor refactoring
+- There were a couple of challenges after all Services were merged 
 
 ### Table Service
 
@@ -136,11 +152,34 @@ My service had a problem with multiple orders, as I mentioned above. I noticed i
 5. For better debugging I also added more logs as next step
 6. The last thing I added is a new error response of 404 to the customer, when he tries to get a bill before the service has the menu
 
-#### Occurred Problems
+#### Problems
 
 The last thing I mentioned in the block above is an edge case, which in my opinion cannot be handled properly. If the menu cannot be retrieved from the manager and the customer wants a bill, the system will return a 404 error saying the menu and therefore the prices are not available. On the customer side only the error „No open bills“ will be shown, which does not quite meet the error message itself. I guess a solution would be an according message on customer side.
 
 ### Delivery
+#### Approach
+1. Implementation of response Delay to TableService
+   - Timeout of 60s is set for a chance of 10% after 
+2. Identification of fallacies that affect DeliveryService 
+   -identify 500 response of Billing as major issue
+3. Creating Concept based on patterns to handle fallacies
+   - Retry: Retrying of messages after receiving 500 response
+   - Idempotency Key: Using a key when resending to avoid duplicated messages
+4. Implementation of Concepts
+   - Retry: Defining a Loop which resends Message until positive response is received. Delay for resending is based on Fibonacci sequence.
+   - Idempotency Key: Adding deliveryNumber to message Header so Billing can identify duplicate messages
+5. Unit testing of DeliveryService
+6. Merge all Services together
+7. Testing whole System after merging
+   - Fixing of multiple bugs in DeliveryService
+8. Refactoring DekiveryService
+9. Final merg and testing
+
+#### Problems
+- For our suprise the implementation for the delayed TableService response also affected the DeliveryService. When the service was blocked send meals from Food preparation were not machted in my DeliveryService. They were never send to the customer.
+This was fixed, by also blocking the messages coming from food preparation(When managers are smoking they will also not directly take the meals coming from the kitchen.)
+
+-Issue with the data storage in the DeliveryService occured. Because of the timeouts, the implementation to find orders within an Array was not working Properly(indices were switched due to new incomming meals). This was fixed, by putting the item search out of the blocked service part
 
 ### Table Service
 
