@@ -48,6 +48,18 @@
 
 ### Food preparation
 
+#### Approach
+
+1. Defined endpoints for requesting the food information and ordering a new meal
+2. Used the node.js TypeScript template as a Base and added 2 new classes: Food Preparation and Cook
+3. Implemented all endpoints in index.ts
+4. Implemented required functionality behind Food Preparation and Cook classes
+5. Refactoring to Utils and types
+6. Tested both endpoints using Postman
+
+#### Problems 
+- Difficulty testing fetch functionality without running services
+
 ### Billing
 
 #### Approach
@@ -127,6 +139,15 @@ My service had a problem with multiple orders, as I mentioned above. I noticed i
 - Write error documentation
 
 ### Food preparation
+
+#### Approach 
+1. Implemented a fallacy to return a 505 status code with a predefined propability
+2. After testing all the occuring errors I started implementing the recieving part of the Idempotency pattern.
+- updated OpenApi Spec to include a request_id
+- store request_ids and implement check for duplicates
+3. Merge fallacy handling into master
+4. Testing the system
+5. implementing Bugfixes for the general system
 
 ### Billing
 
