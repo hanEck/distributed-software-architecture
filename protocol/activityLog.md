@@ -1,7 +1,5 @@
 # Activity Log
 
----
-
 ## Team
 
 - Markus Fichtner
@@ -17,8 +15,6 @@
 - Delivery (Hannes)
 - Table Service (Carolin)
 - Guest Experience (Tabea)
-
----
 
 ## Part 1: Building the system in a naive way
 
@@ -85,6 +81,7 @@
 My service had a problem with multiple orders, as I mentioned above. I noticed in an earlier implementation that I never return a 202 status code for an updated bill, which is defined in the openAPI definition. The requirements for updating a bill were not clear for me in the beginning, until we tested. This resulted in a lot of code rewriting, model adjustments and refactoring.
 
 ### Delivery
+
 #### Approach
 1. Create Open Api document for Delivery
 2. First documentation of "orderInformation" and "preparedNotification" endpoint
@@ -114,7 +111,18 @@ My service had a problem with multiple orders, as I mentioned above. I noticed i
 
 ### Guest Experience
 
-### Problems
+#### Approach
+1. Defined endpoint for Prices in the OpenAPI Specification for Billing
+2. Implemented menu and prices endpoints in index.ts
+3. Implementation in menu.ts for receiving the menu Items from FoodPreparation
+5. Implementation for required functionality behind GuestExperience
+6. Refactoring of the code
+7. Final merge
+
+#### Problem
+- Testing the fetch without running services
+
+### General Problems
 
 - testing fetch without docker running
 - http protocol was missing in the docker-compose file
@@ -133,10 +141,14 @@ My service had a problem with multiple orders, as I mentioned above. I noticed i
 ### Log
 
 - Individual implementation of fallacies per service
-- Create PRs for each service
-- Merge PRs
+- Merge of all fallacies into Master
 - Chaos testing
 - Write error documentation
+- Individual fixing the errors with Design Patterns
+- Merge Patterns
+- Testing the system
+- Fixing Bugs
+- Final Merge and testing
 
 ### Food preparation
 
@@ -193,7 +205,7 @@ The last thing I mentioned in the block above is an edge case, which in my opini
 6. Merge all Services together
 7. Testing whole System after merging
    - Fixing of multiple bugs in DeliveryService
-8. Refactoring DekiveryService
+8. Refactoring DeliveryService
 9. Final merg and testing
 
 #### Problems
@@ -216,6 +228,22 @@ This was fixed, by also blocking the messages coming from food preparation(When 
 
 ### Guest Experience
 
-### Problems
+#### Approach
+1. Implemented a fallacy which delays in 10% of the time the requests from Billing to GuestExperience for 60 secondes
+2. After merging all fallacies in the Master, I analyzed which failures need to be fixed within GuestExperience
+   - The cook is sometimes to busy to send the MenuItems
+3. Implementation of Design Patterns
+   - Retry: when GuestExperience does not get the MenuItems it should try it agin in a certain time (every retry it should be a bit longer)
+   - Cache: if GuestExperience has all ready retryed it for a certain amount, it should use the cache (which was save early) when the is no cache it should retry again
+4. Testing of Patterns
+5. Merge all Services together
+6. Fixing the new problems that occurred after the merge
+7. Final merge and testing
+
+#### Problems
+- When merging the added patterns, the GuestId (which is created by GuestExperience) had stopped working properly 
+   --> solution: separatation of create menu from get prices
+
+### General Problems
 
 ---
