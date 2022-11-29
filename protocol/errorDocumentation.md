@@ -41,10 +41,10 @@ This error can be traced back to the „Occupied Cashier“. From time to time h
 
 ### System Behaviour
 
-- billing sometimes doesn't accept items from delivery, to mark them as delivered
+- Billing sometimes doesn't accept items from delivery, to mark them as delivered
 - the customer receives the items but they are not registered
 - therefore, the item will never be billed because it's not in the system anymore
-- the screenshot above shows on unpaid item (Pommes) but if a bill is requested, billing says there are no billable items
+- the screenshot above shows on unpaid item (Pommes) but if a bill is requested, Billing says there are no billable items
 
 ## 4. No Menu Prices
 
@@ -57,8 +57,8 @@ This error can be traced back to the „Overworked Manager“. She is sometimes 
 
 ### System Behaviour
 
-- Guest Experience sends the prices for items to slow to billing
+- Guest Experience sends the prices for items to slow to Billing
 - since he doesn't re-fetch those, the prices are missing in his system, so he can't write bills
-- because this is not handled in code, the billing service crashes
+- because this is not handled in code, the Billing service crashes
 
 ---
