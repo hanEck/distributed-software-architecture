@@ -18,9 +18,9 @@ app.use((req, res, next) => {
 
 main();
 
-async function main(){
+async function main() {
     const connection = await connectToRabbitMq();
-    await sendMessage(connection, "Hello, RabbitMQ!");
+    await subscribeToPlacedOrderChannel(connection, "Hello, RabbitMQ!");
 }
 
 
@@ -39,17 +39,16 @@ async function connectToRabbitMq() {
     }
 }
 
-async function sendMessage(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
+async function subscribeToPlacedOrderChannel(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
     try {
         const channel = await connection.createChannel();
-        const exchange = "my-exchange";
-        const routingKey = "my-routing-key";
 
-        await channel.assertExchange(exchange, "direct", { durable: true });
-        // @ts-ignore
-        channel.publish(exchange, routingKey, Buffer.from(message));
+        await channel.assertQueue('placedOrder');
 
-        console.log(`Sent message: ${message}`);
+        channel.consume("placedOrder", (msg) => {
+            console.log(`Received Message for que "placedOrder:" ${msg}`);
+        })
+
     } catch (error) {
         console.error("Error sending message:", error);
     }
