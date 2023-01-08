@@ -106,7 +106,6 @@ async function sendPlacedOrder(connection: amqp.Connection, order: any) {
 
     setTimeout(function () {
       connection.close();
-      process.exit(0);
     }, 500);
   } catch (error) {
     console.error("Error sending message:", error);
