@@ -42,12 +42,17 @@ async function connectToRabbitMq() {
 async function subscribeToPlacedOrderChannel(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
     try {
         const channel = await connection.createChannel();
+        const exchange = 'placedOrder';
 
-        await channel.assertQueue('placedOrder');
+        await channel.assertExchange(exchange, 'direct', { durable: true });
 
-        channel.consume("placedOrder", (msg) => {
+        const q = await channel.assertQueue('orderPlacedQueue', { exclusive: true });
+
+        await channel.bindQueue(q.queue, exchange, '');
+
+        channel.consume(q.queue, (msg) => {
             console.log(`Received Message for que "placedOrder:" ${msg}`);
-        })
+        },{noAck:true});
 
     } catch (error) {
         console.error("Error sending message:", error);
