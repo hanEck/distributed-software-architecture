@@ -2,7 +2,7 @@ import express = require("express");
 import bodyParser = require("body-parser");
 import { PreparedFood, ReceivedOrderInformation } from './interfaces'
 import { manageOrder, findOrder } from './Delivery'
-import { Resolver } from "dns";
+import amqp, { connect } from "amqplib";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
@@ -16,12 +16,51 @@ app.use((req, res, next) => {
     })
 });
 
+main();
+
+async function main(){
+    const connection = await connectToRabbitMq();
+    await sendMessage(connection, "Hello, RabbitMQ!");
+}
+
+
+async function connectToRabbitMq() {
+    try {
+        const connection = await connect({
+            hostname: "RabbitMQ",
+            port: 5672,
+            username: process.env.RABBITMQ_DEFAULT_USER || "admin",
+            password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234"
+        });
+        console.log("Successfully connected to RabbitMQ");
+        return connection;
+    } catch (error) {
+        console.error("Error connecting to RabbitMQ:", error);
+    }
+}
+
+async function sendMessage(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
+    try {
+        const channel = await connection.createChannel();
+        const exchange = "my-exchange";
+        const routingKey = "my-routing-key";
+
+        await channel.assertExchange(exchange, "direct", { durable: true });
+        // @ts-ignore
+        channel.publish(exchange, routingKey, Buffer.from(message));
+
+        console.log(`Sent message: ${message}`);
+    } catch (error) {
+        console.error("Error sending message:", error);
+    }
+}
+
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
     const receivedInformation = req.body;
     await checkForSmokingBreak();
     console.log("Delivery: The delivery person is back from the smoking break!" + receivedInformation.order);
-    
+
     const checkedMessageBodyResult = checkRequestBodyOrderInformation(receivedInformation)
     if (checkedMessageBodyResult.hasError) {
         res.status(404).send(checkedMessageBodyResult.errorMessage)
@@ -97,7 +136,7 @@ async function checkForSmokingBreak(fromTableService: boolean = true) {
     const randomNumber = Math.random();
     const chanceForSlowDelivery = parseFloat(process.env.SLOW_DELIVERY) || 0.1
     if (randomNumber < chanceForSlowDelivery) {
-        if(waitingTime === 0 && fromTableService) {
+        if (waitingTime === 0 && fromTableService) {
             console.log("Delivery: Sorry, the Assistant Manager are doing a tactical smoking break!");
             waitingTime = parseInt(process.env.SLOW_DELIVERY_DELAY) || 3000;
             smokeBreak = setInterval(() => {
@@ -105,7 +144,7 @@ async function checkForSmokingBreak(fromTableService: boolean = true) {
                 if (waitingTime === 0) {
                     clearInterval(smokeBreak);
                 }
-            } ,10)
+            }, 10)
         }
     }
     return new Promise((resolve) => setTimeout(resolve, waitingTime))
