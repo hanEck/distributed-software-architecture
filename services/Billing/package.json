@@ -10,6 +10,8 @@
   "author": "Johannes Munker",
   "license": "ISC",
   "dependencies": {
+    "@types/amqplib": "^0.10.1",
+    "amqplib": "^0.10.3",
     "express": "^4.18.1",
     "node-fetch": "^2.6.7",
     "nodemon": "^2.0.19",

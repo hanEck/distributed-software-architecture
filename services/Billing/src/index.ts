@@ -1,6 +1,15 @@
 import express = require("express");
-import { BillPayment, ErrorMessage, GuestBill, GuestOrders, ItemRegistration, PaidBill, PAYMENT_METHOD } from "./types/types";
+import {
+	BillPayment,
+	ErrorMessage,
+	GuestBill,
+	GuestOrders,
+	ItemRegistration,
+	PaidBill,
+	PAYMENT_METHOD
+} from "./types/types";
 import BillingService from "./billingService";
+import amqp, { connect } from "amqplib";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const BUSY_THRESHOLD = parseFloat(process.env.BUSY_THRESHOLD) || 0.1;
@@ -9,6 +18,45 @@ const app = express();
 app.use(express.json());
 
 const billingService = new BillingService();
+
+async function connectToRabbitMq() {
+	try {
+		const connection = await connect({
+			hostname: "RabbitMQ",
+			port: 5672,
+			username: process.env.RABBITMQ_DEFAULT_USER || "admin",
+			password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234"
+		});
+		console.log("Successfully connected to RabbitMQ");
+		return connection;
+	} catch (error) {
+		console.error("Error connecting to RabbitMQ:", error);
+	}
+}
+
+async function sendMessage(connection: amqp.Connection, message: string | ArrayBuffer | {valueOf(): ArrayBuffer | SharedArrayBuffer;}) {
+	try {
+		const channel = await connection.createChannel();
+		const exchange = "my-exchange";
+		const routingKey = "my-routing-key";
+
+		await channel.assertExchange(exchange, "direct", { durable: true });
+		// @ts-ignore
+		channel.publish(exchange, routingKey, Buffer.from(message));
+
+		console.log(`Sent message: ${message}`);
+	} catch (error) {
+		console.error("Error sending message:", error);
+	}
+}
+
+async function main() {
+	const connection = await connectToRabbitMq();
+	await sendMessage(connection, "Hello, RabbitMQ!");
+}
+
+main().then(() => console.log("Sending test message successful!"));
+
 
 // Generates the bill for a guest with all unpaid but delivered items
 app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId", (req, res) => {
