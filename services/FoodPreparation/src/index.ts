@@ -2,6 +2,7 @@ import express = require("express");
 import FoodPreparation from "./FoodPreperation";
 import { CookableMeal, OrderItem } from "./Types/types";
 import Idempotency from "./Utils/Idempotency";
+import { connectToRabbitMq, sendMessage } from "./Utils/Utils";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const propability = parseFloat(process.env.BUSY_COOK) || 0.1;
@@ -14,6 +15,13 @@ app.use((err: Error, req: any, res: any, next: any) => {
     }
     next();
 });
+
+async function main() {
+	const connection = await connectToRabbitMq();
+	await sendMessage(connection, "Hello from Food Preparation!");
+}
+
+main().then(() => console.log("Sending test message from food prep successful!"));
 
 const foodPreparation = new FoodPreparation();
 const idempotencyPattern = new Idempotency();
