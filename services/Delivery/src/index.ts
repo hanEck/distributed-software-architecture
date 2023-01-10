@@ -6,6 +6,7 @@ import amqp, { connect } from "amqplib";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
+
 const app = express();
 app.use((req, res, next) => {
     bodyParser.json()(req, res, err => {
@@ -62,7 +63,6 @@ async function subscribeToPlacedOrderEvent(connection: amqp.Connection, message:
     }
 }
 
-async function subscribeTo
 //############################################################################OLD CODE#############################################################
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
