@@ -2,6 +2,7 @@ import { Console } from "console";
 import fetch from "node-fetch";
 import { Order } from "./types";
 import amqp, { connect } from "amqplib";
+import { createConnection } from "net";
 
 let orderNumber = 1;
 let request_id = 1;
@@ -12,10 +13,11 @@ const forgetfulnessThreshold =
 export async function processOrder(order: Order) {
   const connection = await connectToRabbitMq();
   await sendPlacedOrder(connection, order);
+  const waitingTime = getWaitingTime();
 
-  const highestOrderPosition = await sendFoodToFoodPreparation(order);
-  await sendOrderToDelivery(order);
-  const waitingTime = calculateWaitingTime(highestOrderPosition);
+  // const highestOrderPosition = await sendFoodToFoodPreparation(order);
+  // await sendOrderToDelivery(order);
+  // const waitingTime = calculateWaitingTime(highestOrderPosition);
 
   return { waitingTime, order: orderNumber - 1 };
 }
@@ -110,4 +112,20 @@ async function sendPlacedOrder(connection: amqp.Connection, order: any) {
   } catch (error) {
     console.error("Error sending message:", error);
   }
+}
+
+async function getWaitingTime() {
+  let highestOrderPosition = 0;
+
+  const connection = await connectToRabbitMq();
+  const channel = await connection.createChannel();
+  channel.consume("updateWaitingTime", (message) => {
+    const orderPosition = JSON.parse(message.content.toString());
+    if (orderPosition.ordersBefore > highestOrderPosition) {
+      highestOrderPosition = orderPosition.ordersBefore;
+    }
+  });
+
+  const waitingTime = calculateWaitingTime(highestOrderPosition);
+  return waitingTime;
 }
