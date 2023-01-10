@@ -1,195 +1,191 @@
 asyncapi: 2.5.0
 info:
-  title: Restaurant Kata
-  version: 0.1.0
+    title: Restaurant Kata
+    version: 0.1.0
 channels:
-  events/orderPlaced:
-    subscribe:
-      message:
-        $ref: '#/components/messages/PlacedOrder'
+    events/placeOrder:
+        subscribe:
+            message:
+                $ref: "#/components/messages/PlacedOrder"
 
-  commands/billDelivery:
-    description: "Bill delivered items"
-    publish:
-      operationId: billDeliverdItems
-      message:
-        $ref: '#/components/messages/BillDelivery'
+    commands/billDelivery:
+        description: "Bill delivered items"
+        publish:
+            operationId: billDeliverdItems
+            message:
+                $ref: "#/components/messages/BillDelivery"
 
-  commands/updateFood:
-    description: "Update food menu"
-    publish:
-      operationId: availableFood
-      message:
-        $ref: '#/components/messages/UpdateFood'
+    commands/updateFood:
+        description: "Update food menu"
+        publish:
+            operationId: availableFood
+            message:
+                $ref: "#/components/messages/UpdateFood"
 
-  commands/deliverFood:
-    description: "Deliver food item"
-    publish:
-      operationId: deliverFood
-      message:
-        $ref: '#/components/messages/DeliverFood'
+    commands/deliverFood:
+        description: "Deliver food item"
+        publish:
+            operationId: deliverFood
+            message:
+                $ref: "#/components/messages/DeliverFood"
 
-  commands/updatePrices:
-    description: "Update prices for the food menu"
-    publish: 
-      operationId: updatePrices
-      message:
-        $ref: "#/components/messages/UpdatePrices"
+    commands/updatePrices:
+        description: "Update prices for the food menu"
+        publish:
+            operationId: updatePrices
+            message:
+                $ref: "#/components/messages/UpdatePrices"
 
-  commands/updateWaitingTime:
-    description: "Update waiting Time for the order"
-    publish: 
-      operationId: updateWaitingTime
-      message:
-        $ref: "#/components/messages/UpdateWaitingTime"
-    
+    commands/updateWaitingTime:
+        description: "Update waiting Time for the order"
+        publish:
+            operationId: updateWaitingTime
+            message:
+                $ref: "#/components/messages/UpdateWaitingTime"
+
 components:
-  messages:
-    BillDelivery:
-      name: billDelivered
-      title: The items are delivered
-      contentType: application/json
-      payload: 
-        $ref: '#/components/schemas/billDeliveryPayload'
+    messages:
+        BillDelivery:
+            name: billDelivered
+            title: The items are delivered
+            contentType: application/json
+            payload:
+                $ref: "#/components/schemas/billDeliveryPayload"
 
-    PlacedOrder:
-      name: placedOrder
-      title: These items are ordered
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/orderPayload'
+        PlacedOrder:
+            name: placedOrder
+            title: These items are ordered
+            contentType: application/json
+            payload:
+                $ref: "#/components/schemas/orderPayload"
 
-    UpdateFood:
-      name: availableFood 
-      title: These meals are available
-      summary: Inform about a new meal plan
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/updateFoodPayload'
+        UpdateFood:
+            name: availableFood
+            title: These meals are available
+            summary: Inform about a new meal plan
+            contentType: application/json
+            payload:
+                $ref: "#/components/schemas/updateFoodPayload"
 
-    UpdatePrices:
-      name: updatePrices
-      title: "Update the menu with the new prices"
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/pricesPayload'
+        UpdatePrices:
+            name: updatePrices
+            title: "Update the menu with the new prices"
+            contentType: application/json
+            payload:
+                $ref: "#/components/schemas/pricesPayload"
 
-    UpdateWaitingTime:
-      name: updateWaitingTime
-      title: "Update the menu with the new WaitingTime"
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/waitingTimePayload'
+        UpdateWaitingTime:
+            name: updateWaitingTime
+            title: "Update the menu with the new WaitingTime"
+            contentType: application/json
+            payload:
+                $ref: "#/components/schemas/waitingTimePayload"
 
-    DeliverFood:
-      name: deliverFood
-      title: "Deliver Food item to the customer"
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/deliverItemPayload'
+        DeliverFood:
+            name: deliverFood
+            title: "Deliver Food item to the customer"
+            contentType: application/json
+            payload:
+                $ref: "#/components/schemas/deliverItemPayload"
 
-  schemas:
-    billDeliveryPayload: 
-      type: object
-      properties:
-        guest:
-          type: number
-          format: integer
-        order:
-          type: number
-          format: integer
-        food:
-          type: array
-          items:
-            type: number
-            format: integer
-        drinks:
-          type: array
-          items:
-            type: number
-            format: integer
-        
+    schemas:
+        billDeliveryPayload:
+            type: object
+            properties:
+                guest:
+                    type: number
+                    format: integer
+                order:
+                    type: number
+                    format: integer
+                food:
+                    type: array
+                    items:
+                        type: number
+                        format: integer
+                drinks:
+                    type: array
+                    items:
+                        type: number
+                        format: integer
 
-    orderPayload:
-      type: object
-      properties:
-        guest:
-          type: number
-          format: integer
-        order:
-          type: number
-          format: integer
-        food:
-          type: array
-          items:
-            type: number
-            format: integer
-          drinks:
+        orderPayload:
+            type: object
+            properties:
+                guest:
+                    type: number
+                    format: integer
+                order:
+                    type: number
+                    format: integer
+                food:
+                    type: array
+                    items:
+                        type: number
+                        format: integer
+                    drinks:
+                        type: array
+                        items:
+                            type: number
+                            format: integer
+
+        pricesPayload:
+            type: object
+            properties:
+                food:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: number
+                                format: integer
+                            price:
+                                type: number
+                                format: float
+                drinks:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: number
+                                format: integer
+                            price:
+                                type: number
+                                format: float
+
+        updateFoodPayload:
             type: array
             items:
-              type: number
-              format: integer
-              
-    pricesPayload:
-      type: object
-      properties: 
-        food:
-          type: array
-          items: 
-            type: object
-            properties: 
-              id:
-                type: number
-                format: integer	
-              price:
-                type: number
-                format: float
-        drinks:
-          type: array
-          items: 
-            type: object
-            properties: 
-              id:
-                type: number
-                format: integer	
-              price:
-                type: number
-                format: float
-                
-    updateFoodPayload:
-      type: array
-      items: 
-        type: object
-        properties:
-          id:
-            type: number
-            format: integer	
-          name:
-            type: string
-          nutrition: 
-            type: array
-            items:
-              type: string 
-    
-    deliverItemPayload:
-      type: object
-      properties: 
-        order: 
-          type: number
-          format: integer
-        food: 
-          type: number
-          format: integer
+                type: object
+                properties:
+                    id:
+                        type: number
+                        format: integer
+                    name:
+                        type: string
+                    nutrition:
+                        type: array
+                        items:
+                            type: string
 
-    waitingTimePayload:
-      type: object
-      properties:
-        ordersBefore:
-          type: number
-          format: integer
-        orderId:
-          type: number
-          format: integer
-          
-      
-          
+        deliverItemPayload:
+            type: object
+            properties:
+                order:
+                    type: number
+                    format: integer
+                food:
+                    type: number
+                    format: integer
+
+        waitingTimePayload:
+            type: object
+            properties:
+                ordersBefore:
+                    type: number
+                    format: integer
+                orderId:
+                    type: number
+                    format: integer
