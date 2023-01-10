@@ -3,9 +3,16 @@ import { CookableMeal } from "../Types/types";
 
 export default class RabbitMQ  {
     connection: amqp.Connection;
+    instance: RabbitMQ;
     constructor() {
-        this.connectToRabbitMq();
+        if(!this.instance) {
+            this.instance = this;
+            this.connectToRabbitMq();
+        }
+
+        return this.instance;
     }
+
     async connectToRabbitMq() {
         try {
             this.connection = await connect({
@@ -20,7 +27,7 @@ export default class RabbitMQ  {
         }
     }
     
-    async sendMessage(queue: string, message: string | CookableMeal[] ) {
+    async sendMessage(queueName: string, message: any ) {
         try {
             if (!this.connection) { 
                 await this.connectToRabbitMq();
@@ -28,9 +35,8 @@ export default class RabbitMQ  {
             const channel = await this.connection.createChannel();
             const routingKey = "my-routing-key";
     
-            await channel.assertQueue(queue, { durable: true });
-            // @ts-ignore
-            channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
+            await channel.assertQueue(queueName, { durable: true });
+            channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)));
             console.log(`Sent message: ${message}`);
         } catch (error) {
             console.error("Error sending message:", error);
@@ -38,23 +44,23 @@ export default class RabbitMQ  {
             // await this.connection.close();
         }
     }
-    async consumeEvent(queue: string, callback: (msg: amqp.Message) => void) {
+    async consumeEvent(queueName: string, callback: (msg: amqp.Message) => void) {
         try {
             if (!this.connection) { 
                 await this.connectToRabbitMq();
             }
             const channel = await this.connection.createChannel();
-            const exchange = "my-exchange";
-            const routingKey = "my-routing-key";
-            await channel.assertExchange(queue, "direct", { durable: true });
-            channel.consume(queue, (msg: amqp.Message) => {
+            const queue = await channel.assertQueue('', { exclusive: true });
+            await channel.assertExchange(queueName, 'fanout', { durable: false });
+            channel.bindQueue(queue.queue, queueName, '');
+            channel.consume(queue.queue, (msg: amqp.Message) => {
                 if (msg !== null) {
                   console.log('Recieved:', JSON.parse(msg.content.toString()));
                   callback(msg);
                 } else {
                   console.log('Consumer cancelled by server');
                 }
-              });
+              }, { noAck: true });
         } catch (error) {
             console.error("Error consuming message:", error);
         }

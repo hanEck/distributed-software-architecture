@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import Cook from "./Cook";
 import { cookableMeals } from "./Meals";
 import { CookableMeal, MealItem, OrderItem } from "./Types/types";
+import RabbitMQ from "./Utils/RabbitMQ";
 import { delay } from "./Utils/Utils";
 
 export default class FoodPreparation {
@@ -52,13 +53,7 @@ export default class FoodPreparation {
 
     private notifyDelivery(): void {
         const {id, order} = this.counter.shift();
-        const path = process.env.API_DELIVERY || "Delivery:8084";
-            fetch(`${path}/preparedNotification`,{
-                method: "POST",
-                body: JSON.stringify({"food": id,"order": order}),
-                headers: { 'Content-Type': 'application/json' }
-            }).catch (() => {
-            console.log("An error occured trying to send a delivery notification");
-        })
+        const broker = new RabbitMQ();
+        broker.sendMessage("deliverFood", {food: id, order: order});
     }
 }
