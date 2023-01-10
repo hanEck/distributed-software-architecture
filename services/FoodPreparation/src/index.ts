@@ -2,7 +2,7 @@ import express = require("express");
 import FoodPreparation from "./FoodPreperation";
 import { CookableMeal, OrderItem } from "./Types/types";
 import Idempotency from "./Utils/Idempotency";
-import { connectToRabbitMq, sendMessage } from "./Utils/Utils";
+import RabbitMQ from "./Utils/RabbitMQ";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const propability = parseFloat(process.env.BUSY_COOK) || 0.1;
@@ -16,13 +16,7 @@ app.use((err: Error, req: any, res: any, next: any) => {
     next();
 });
 
-async function main() {
-	const connection = await connectToRabbitMq();
-	await sendMessage(connection, "Hello from Food Preparation!");
-}
-
-main().then(() => console.log("Sending test message from food prep successful!"));
-
+const broker = new RabbitMQ();
 const foodPreparation = new FoodPreparation();
 const idempotencyPattern = new Idempotency();
 
@@ -33,6 +27,27 @@ app.get<any, void, any>("/meals", (req,res) => {
         res.status(505).send({ status: 505, message: "Cook is busy" });
     } else {
         res.status(200).json(cookableMeals);
+    }
+});
+
+const cookableMeals = foodPreparation.getCookableMeals();
+broker.sendMessage("UpdateFood", cookableMeals);
+
+broker.consumeEvent("placedOrder", (msg) => {
+    const {request_id,id, order} = JSON.parse(msg.content.toString());
+    if(id === undefined || order === undefined) {
+        console.log("Food Preparation: You tried to submit an empty order");
+    }
+    if(idempotencyPattern.checkMessage(request_id)) {
+        const ordersInQueue = foodPreparation.takeOrder(id,order);
+        if(!ordersInQueue) {
+            console.log("Food Preparation: No Meal found under this id");
+        } else {
+            console.log("Food Preparation: Order is in queue");
+            broker.sendMessage("UpdateWaitingTime", ordersInQueue);
+        }
+    } else {
+        console.log("Food Preparation: Order is already in queue");
     }
 });
 
