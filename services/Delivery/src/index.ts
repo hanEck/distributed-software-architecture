@@ -4,6 +4,8 @@ import { PreparedFood, ReceivedOrderInformation } from './interfaces'
 import { manageOrder, findOrder } from './Delivery'
 import amqp, { connect } from "amqplib";
 
+const global = require('global');
+
 const port = parseInt(process.env.PORT, 10) || 3000;
 
 
@@ -159,3 +161,6 @@ async function checkForSmokingBreak(fromTableService: boolean = true) {
     return new Promise((resolve) => setTimeout(resolve, waitingTime))
 }
 //////////////////////////////////////Helper methods/////////////////////////////////////////////////////////////////
+
+//TODO: Send the command to Billing
+// Make the connection to Food preparation Command
