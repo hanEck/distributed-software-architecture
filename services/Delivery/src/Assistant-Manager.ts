@@ -19,7 +19,6 @@ export default class AssistantManager {
             drinks: delivery.Order.drinks
         }
         
-
         this.isDelivering = true;
 
         await fetch(url.href, {

@@ -20,7 +20,7 @@ main();
 
 async function main() {
     const connection = await connectToRabbitMq();
-    await subscribeToPlacedOrderChannel(connection, "Hello, RabbitMQ!");
+    await subscribeToPlacedOrderEvent(connection, "Hello, RabbitMQ!");
 }
 
 
@@ -39,19 +39,22 @@ async function connectToRabbitMq() {
     }
 }
 
-async function subscribeToPlacedOrderChannel(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
+async function subscribeToPlacedOrderEvent(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
     try {
         const channel = await connection.createChannel();
         const exchange = 'placedOrder';
 
         await channel.assertExchange(exchange, 'direct', { durable: true });
 
-        const q = await channel.assertQueue('orderPlacedQueue', { exclusive: true });
+        const q = await channel.assertQueue('orderPlacedDeliveryQueue', { exclusive: true });
 
         await channel.bindQueue(q.queue, exchange, '');
 
         channel.consume(q.queue, (msg) => {
             console.log(`Received Message for que "placedOrder:" ${msg}`);
+            const messageContent = JSON.parse(msg.content.toString());
+            manageOrder(messageContent);
+
         },{noAck:true});
 
     } catch (error) {
@@ -59,6 +62,8 @@ async function subscribeToPlacedOrderChannel(connection: amqp.Connection, messag
     }
 }
 
+async function subscribeTo
+//############################################################################OLD CODE#############################################################
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
     const receivedInformation = req.body;
