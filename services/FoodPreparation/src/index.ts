@@ -2,9 +2,9 @@ import express = require("express");
 import FoodPreparation from "./FoodPreperation";
 import { CookableMeal, OrderItem } from "./Types/types";
 import Idempotency from "./Utils/Idempotency";
+import RabbitMQ from "./Utils/RabbitMQ";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
-const propability = parseFloat(process.env.BUSY_COOK) || 0.1;
 const app = express();
 app.use(express.json());
 app.use((err: Error, req: any, res: any, next: any) => {
@@ -15,33 +15,28 @@ app.use((err: Error, req: any, res: any, next: any) => {
     next();
 });
 
+const broker = RabbitMQ.getInstance();
 const foodPreparation = new FoodPreparation();
 const idempotencyPattern = new Idempotency();
+const cookableMeals = foodPreparation.getCookableMeals();
 
-app.get<any, void, any>("/meals", (req,res) => {
-    const cookableMeals = foodPreparation.getCookableMeals();
-    if(Math.random() < propability) {
-        console.log("Food Preparation: Cooking is busy right now");       
-        res.status(505).send({ status: 505, message: "Cook is busy" });
-    } else {
-        res.status(200).json(cookableMeals);
-    }
-});
+broker.sendMessage("UpdateFood", cookableMeals);
 
-app.post<any, OrderItem, string>("/orderItem", (req ,res) => {
-    const {request_id,id, order} = req.body;
+broker.consumeEvent("placedOrder", (msg) => {
+    const {request_id,id, order} = JSON.parse(msg.content.toString());
     if(id === undefined || order === undefined) {
-        res.status(400).send("You tried to submit an empty order");
-    } 
+        console.log("Food Preparation: You tried to submit an empty order");
+    }
     if(idempotencyPattern.checkMessage(request_id)) {
         const ordersInQueue = foodPreparation.takeOrder(id,order);
         if(!ordersInQueue) {
-            res.status(404).send("No Meal found under this id");
+            console.log("Food Preparation: No Meal found under this id");
         } else {
-            res.status(200).send(ordersInQueue);
+            console.log("Food Preparation: Order is in queue");
+            broker.sendMessage("UpdateWaitingTime", ordersInQueue);
         }
     } else {
-        res.status(200).send(foodPreparation.ordersInPreparation.toString());
+        console.log("Food Preparation: Order is already in queue");
     }
 });
 
