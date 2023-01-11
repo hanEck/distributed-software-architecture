@@ -1,15 +1,6 @@
 import express = require("express");
-import {
-	BillPayment,
-	ErrorMessage,
-	GuestBill,
-	GuestOrders,
-	ItemRegistration,
-	PaidBill,
-	PAYMENT_METHOD
-} from "./types/types";
+import { BillPayment, ErrorMessage, GuestBill, GuestOrders, PaidBill, PAYMENT_METHOD } from "./types/types";
 import BillingService from "./billingService";
-import amqp, { connect } from "amqplib";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const BUSY_THRESHOLD = parseFloat(process.env.BUSY_THRESHOLD) || 0.1;
@@ -18,45 +9,6 @@ const app = express();
 app.use(express.json());
 
 const billingService = new BillingService();
-
-async function connectToRabbitMq() {
-	try {
-		const connection = await connect({
-			hostname: "RabbitMQ",
-			port: 5672,
-			username: process.env.RABBITMQ_DEFAULT_USER || "admin",
-			password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234"
-		});
-		console.log("Successfully connected to RabbitMQ");
-		return connection;
-	} catch (error) {
-		console.error("Error connecting to RabbitMQ:", error);
-	}
-}
-
-async function sendMessage(connection: amqp.Connection, message: string | ArrayBuffer | {valueOf(): ArrayBuffer | SharedArrayBuffer;}) {
-	try {
-		const channel = await connection.createChannel();
-		const exchange = "my-exchange";
-		const routingKey = "my-routing-key";
-
-		await channel.assertExchange(exchange, "direct", { durable: true });
-		// @ts-ignore
-		channel.publish(exchange, routingKey, Buffer.from(message));
-
-		console.log(`Sent message: ${message}`);
-	} catch (error) {
-		console.error("Error sending message:", error);
-	}
-}
-
-async function main() {
-	const connection = await connectToRabbitMq();
-	await sendMessage(connection, "Hello, RabbitMQ!");
-}
-
-main().then(() => console.log("Sending test message successful!"));
-
 
 // Generates the bill for a guest with all unpaid but delivered items
 app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId", (req, res) => {
@@ -163,53 +115,6 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	res.status(202);
 	res.send(paidBill);
-});
-
-// Registers items as delivered, when they are delivered to a guest
-app.post<string, {guestId: string}, any, ItemRegistration>("/registerDelivery/:guestId", (req, res) => {
-	const guestId = parseInt(req.params.guestId);
-	const deliveryId = Number(req.header("deliveryId"));
-	const body = req.body;
-	const { food, drinks } = body;
-
-	const amIBusy = Math.random();
-	if (amIBusy <= BUSY_THRESHOLD) {
-		res.status(500);
-		console.log("Cashier: I'm busy at the moment, please try again later");
-		return res.send("Sorry I'm busy!");
-	}
-
-	if (!deliveryId) {
-		res.status(400);
-		console.log("Cashier: I need a delivery Id to identify the delivery");
-		return res.send("Please send a delivery Id to identify the delivery.");
-	}
-
-	if (billingService.deliveryIds.includes(deliveryId)) {
-		res.status(400);
-		console.log("Cashier: I already registered this delivery");
-		return res.send("I already received this delivery.");
-	}
-
-	billingService.deliveryIds.push(deliveryId);
-
-	if (typeof guestId !== "number") {
-		res.status(400);
-		console.log("Cashier: There was no guest provided to register the items to");
-		return res.send("No guest was specified");
-	}
-
-	if (!food.length && !drinks.length) {
-		res.status(416);
-		console.log("Cashier: You need to send me items if I should register something");
-		return res.send("No items were specified for registration");
-	}
-
-	console.log("Cashier: I'm registering a new delivery");
-	billingService.registerDeliveredItems({ ...body, guest: guestId });
-
-	res.status(200);
-	res.send("Items have been registered successfully");
 });
 
 app.listen(port, () => {
