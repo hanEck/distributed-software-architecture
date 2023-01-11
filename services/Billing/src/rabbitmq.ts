@@ -1,4 +1,5 @@
-import amqp, { connect, Connection, ConsumeMessage } from "amqplib";
+import { connect, Connection, ConsumeMessage } from "amqplib";
+import { log } from "util";
 
 export class RabbitMQ {
 	connection: Connection;
@@ -22,25 +23,16 @@ export class RabbitMQ {
 	}
 
 	async receiveMessage(queueName: string, callback: (data: ConsumeMessage | null) => void) {
-
 		if (!this.connection) {
-			try {
-				this.connection = await this.connectToRabbitMq();
-			} catch (e) {
-				console.error(e);
-			}
+			this.connection = await this.connectToRabbitMq();
 		}
 
-		try {
-			const channel = await this.connection.createChannel();
+		const channel = await this.connection.createChannel();
 
-			await channel.assertQueue(queueName, {
-				durable: true
-			});
+		await channel.assertQueue(queueName, {
+			durable: true
+		});
 
-			await channel.consume(queueName, callback);
-		} catch (e) {
-			console.error(e)
-		}
+		await channel.consume(queueName, callback);
 	}
 }
