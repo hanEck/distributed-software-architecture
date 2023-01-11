@@ -1,6 +1,8 @@
 import { Console } from "console";
 import fetch from "node-fetch";
 import { Order } from "./types";
+import amqp, { connect } from "amqplib";
+import { createConnection } from "net";
 
 let orderNumber = 1;
 let request_id = 1;
@@ -9,9 +11,13 @@ const forgetfulnessThreshold =
   parseFloat(process.env.FORGETTABLE_WAITER_RATIO) || 0.1;
 
 export async function processOrder(order: Order) {
-  const highestOrderPosition = await sendFoodToFoodPreparation(order);
-  await sendOrderToDelivery(order);
-  const waitingTime = calculateWaitingTime(highestOrderPosition);
+  const connection = await connectToRabbitMq();
+  await sendPlacedOrder(connection, order);
+  const waitingTime = getWaitingTime();
+
+  // const highestOrderPosition = await sendFoodToFoodPreparation(order);
+  // await sendOrderToDelivery(order);
+  // const waitingTime = calculateWaitingTime(highestOrderPosition);
 
   return { waitingTime, order: orderNumber - 1 };
 }
@@ -60,8 +66,8 @@ async function sendFoodToFoodPreparation(order: Order) {
       }
       request_id++;
     }
-    if(requestCount === 2) {
-        request_id = request_id - foodOrder.length;
+    if (requestCount === 2) {
+      request_id = request_id - foodOrder.length;
     }
     requestCount--;
   }
@@ -70,5 +76,56 @@ async function sendFoodToFoodPreparation(order: Order) {
 
 function calculateWaitingTime(highestOrderPosition: number) {
   let waitingTime = highestOrderPosition * averageWaitingTimePerGuest;
+  return waitingTime;
+}
+
+async function connectToRabbitMq() {
+  try {
+    const connection = await connect({
+      hostname: "RabbitMQ",
+      port: 5672,
+      username: process.env.RABBITMQ_DEFAULT_USER || "admin",
+      password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234",
+    });
+    console.log("Successfully connected to RabbitMQ");
+    return connection;
+  } catch (error) {
+    console.error("Error connecting to RabbitMQ:", error);
+  }
+}
+
+async function sendPlacedOrder(connection: amqp.Connection, order: any) {
+  try {
+    const channel = await connection.createChannel();
+
+    const exchange = "placedOrder";
+
+    await channel.assertExchange(exchange, "direct", { durable: true });
+
+    const routingKey = "newOrder";
+    const eventBuffer = Buffer.from(JSON.stringify(order));
+    channel.publish(exchange, routingKey, eventBuffer);
+
+    setTimeout(function () {
+      connection.close();
+    }, 500);
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+}
+
+async function getWaitingTime() {
+  let highestOrderPosition = 0;
+
+  const connection = await connectToRabbitMq();
+  const channel = await connection.createChannel();
+  channel.consume("updateWaitingTime", (message) => {
+    const orderPosition = JSON.parse(message.content.toString());
+    if (orderPosition.ordersBefore > highestOrderPosition) {
+      highestOrderPosition = orderPosition.ordersBefore;
+    }
+  });
+
+  const waitingTime = calculateWaitingTime(highestOrderPosition);
   return waitingTime;
 }
