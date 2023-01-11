@@ -1,6 +1,6 @@
 import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
-import fetch from "node-fetch";
 import { delay, getFibonacciSequence } from "./utils";
+import { RabbitMQ } from "./rabbitmq";
 
 const MAX_RETRY_COUNT = 5;
 
@@ -12,22 +12,26 @@ export default class BillingService {
 	billIdCounter = 1;
 	retryCounter = MAX_RETRY_COUNT;
 	fibonacciSeq = getFibonacciSequence(this.retryCounter);
+	rabbitmq: RabbitMQ;
 
 	constructor() {
+		this.rabbitmq = new RabbitMQ();
 		( async () => {
-			await this.getMenu();
+			await this.subscribeToMenu();
+			await this.subscribeToDeliveries();
 		} )();
 	}
 
-	private async getMenu(): Promise<void> {
+	private async subscribeToMenu(): Promise<void> {
 		// get menu from guest experience
 
-		const path = `${process.env.API_GUEST_EXPERIENCE || "http://GuestExperience:8081"}/prices`;
 		try {
 			console.log("Cashier: Trying to get the menu from Manager.");
 
-			const response = await fetch(path, { timeout: 5000 });
-			this.menu = await response.json();
+			await this.rabbitmq.receiveMessage("updatePrices", (data) => {
+				if (!data) console.error("No data received");
+				this.menu = JSON.parse(data.content.toString());
+			});
 
 			console.log("Cashier: Got the menu from Manager.");
 		} catch (e) {
@@ -51,7 +55,7 @@ export default class BillingService {
 		}
 
 		this.retryCounter--;
-		return this.getMenu();
+		return this.subscribeToMenu();
 	}
 
 	generateBill(guestDelivery: GuestOrders): GuestBill {
@@ -144,7 +148,11 @@ export default class BillingService {
 
 		const billIndex = this.bills.findIndex(bill => bill.bill === billId);
 		const bill = this.bills[billIndex];
-		const paidOrders = bill.orders.flatMap(order => ( { order: order.order, paidDrinks: [...order.drinks], paidFood: [...order.food] } ));
+		const paidOrders = bill.orders.flatMap(order => ( {
+			order: order.order,
+			paidDrinks: [...order.drinks],
+			paidFood: [...order.food]
+		} ));
 
 		const paidBill: PaidBill = {
 			bill: billId,
@@ -191,6 +199,45 @@ export default class BillingService {
 		return { deliveredItemsIndex, deliveredOrders };
 	}
 
+	private async subscribeToDeliveries() {
+		try {
+			console.log("Cashier: I'm listening to bill delivery commands now.");
+
+			await this.rabbitmq.receiveMessage("billDelivery", (data) => {
+				if (!data) console.error("No data received");
+				const deliveryId = data.properties.headers["deliveryId"];
+				const parsedData = JSON.parse(data.content.toString());
+
+				if (this.isItemRegistration(parsedData)) {
+					const { food, drinks } = parsedData;
+
+					if (!deliveryId) {
+						console.log("Cashier: I need a delivery Id to identify the delivery");
+						return;
+					}
+
+					if (this.deliveryIds.includes(deliveryId)) {
+						console.log("Cashier: I already registered this delivery");
+						return;
+					}
+
+					this.deliveryIds.push(deliveryId);
+
+					if (!food.length && !drinks.length) {
+						console.log("Cashier: You need to send me items if I should register something");
+						return;
+					}
+
+					console.log("Cashier: I'm registering a new delivery");
+					this.registerDeliveredItems(parsedData);
+				}
+				throw new Error("Received data doesn't match the required data type.");
+			});
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
 	registerDeliveredItems(itemRegistration: ItemRegistration) {
 		// register items which are delivered to a guest
 
@@ -213,6 +260,21 @@ export default class BillingService {
 			this.guestOrders.push({ guest, orders: [{ food, drinks, order }] });
 		}
 
+	}
+
+	private isItemRegistration(itemRegistration: any): itemRegistration is ItemRegistration {
+		return typeof itemRegistration === "object" &&
+			itemRegistration !== null &&
+			itemRegistration.hasOwnProperty("guest") &&
+			typeof +itemRegistration["guest"] === "number" &&
+			itemRegistration.hasOwnProperty("order") &&
+			typeof +itemRegistration["order"] === "number" &&
+			itemRegistration.hasOwnProperty("food") &&
+			Array.isArray(itemRegistration["food"]) &&
+			itemRegistration["food"].every(item => typeof +item === "number") &&
+			itemRegistration.hasOwnProperty("drinks") &&
+			Array.isArray(itemRegistration["drinks"]) &&
+			itemRegistration["drinks"].every(item => typeof +item === "number");
 	}
 }
 
