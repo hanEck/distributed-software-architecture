@@ -44,7 +44,7 @@ async function subscribeToPlacedOrderChannel(connection: amqp.Connection, messag
         const channel = await connection.createChannel();
         const exchange = 'placedOrder';
 
-        await channel.assertExchange(exchange, 'direct', { durable: true });
+        await channel.assertExchange(exchange, 'fanout', { durable: true });
 
         const q = await channel.assertQueue('orderPlacedQueue', { exclusive: true });
 

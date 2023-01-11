@@ -31,7 +31,7 @@ async function sendMessage(connection: amqp.Connection, message: any) {
 		const channel = await connection.createChannel();
 		const queue = "updatePrices";
 
-		await channel.assertQueue(queue, { durable: true });
+		await channel.assertQueue(queue);
 		// @ts-ignore
 		channel.sendToQueue(queue, Buffer.from(message));
 
@@ -51,7 +51,7 @@ main().then(() => console.log("Sending test message successful!"));
 
 async function getFood() {
     const channel = await connection.createChannel();
-    channel.consume("availableFood", (message) => {
+    channel.consume("updateFood", (message) => {
         meals = JSON.parse(message.content.toString());
         createMenu(meals)
     })

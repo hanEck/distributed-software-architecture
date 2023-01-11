@@ -20,7 +20,7 @@ const foodPreparation = new FoodPreparation();
 const idempotencyPattern = new Idempotency();
 const cookableMeals = foodPreparation.getCookableMeals();
 
-broker.sendMessage("UpdateFood", cookableMeals);
+broker.sendMessage("updateFood", cookableMeals);
 
 broker.consumeEvent("placedOrder", (msg) => {
     const {request_id,id, order} = JSON.parse(msg.content.toString());
