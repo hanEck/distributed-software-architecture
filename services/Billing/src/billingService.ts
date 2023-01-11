@@ -1,5 +1,4 @@
 import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
-import { delay, getFibonacciSequence } from "./utils";
 import { RabbitMQ } from "./rabbitmq";
 
 const MAX_RETRY_COUNT = 5;
@@ -10,8 +9,6 @@ export default class BillingService {
 	guestOrders: GuestOrders[] = [];
 	menu: Menu;
 	billIdCounter = 1;
-	retryCounter = MAX_RETRY_COUNT;
-	fibonacciSeq = getFibonacciSequence(this.retryCounter);
 	rabbitmq: RabbitMQ;
 
 	constructor() {
@@ -34,32 +31,12 @@ export default class BillingService {
 				if (!content) return console.log("Cashier: No content in the data Guest Experience received");
 				if (!this.isMenu(content)) return console.log("Cashier: Wrong data type menu from Guest Experience received");
 				this.menu = content;
-				console.log(content);
 				console.log("Cashier: Got the menu from Manager.");
 			});
 		} catch (e) {
 			console.log("Cashier: Couldn't get menu from Manager. Reason:");
 			console.error(e.message);
 		}
-	}
-
-	private async handleGetMenuErrors() {
-		if (this.retryCounter > 0) {
-			console.log("Cashier: Couldn't get menu from Manager. I'll ask again in a few seconds.");
-
-			const fibNum = this.fibonacciSeq[MAX_RETRY_COUNT - this.retryCounter];
-			const retryIn = fibNum * 1000; // in ms
-			await delay(retryIn);
-		} else {
-			console.log("Cashier: Seems like the manager is very busy. I'll wait a bit longer and ask again in a minute.");
-
-			const retryIn = 60 * 1000; // in ms
-			await delay(retryIn);
-			this.retryCounter = MAX_RETRY_COUNT;
-		}
-
-		this.retryCounter--;
-		return this.subscribeToMenu();
 	}
 
 	generateBill(guestDelivery: GuestOrders): GuestBill {
@@ -284,10 +261,10 @@ export default class BillingService {
 			menu !== null &&
 			menu.hasOwnProperty("food") &&
 			Array.isArray(menu["food"]) &&
-			menu["food"].every(item => typeof item === "object" && typeof item?.name === "string" && typeof item?.price === "number") &&
+			menu["food"].every(item => typeof item === "object" && typeof item?.id === "number" && typeof item?.price === "number") &&
 			menu.hasOwnProperty("drinks") &&
 			Array.isArray(menu["drinks"]) &&
-			menu["drinks"].every(item => typeof item === "object" && typeof item?.name === "string" && typeof item?.price === "number");
+			menu["drinks"].every(item => typeof item === "object" && typeof item?.id === "number" && typeof item?.price === "number");
 	}
 }
 
