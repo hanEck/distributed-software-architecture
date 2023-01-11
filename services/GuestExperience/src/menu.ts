@@ -11,17 +11,12 @@ const price = [20.2, 10.2, 5.3];
 let currentRetry = 0;
 const maxRetry = 3;
 
-// createMenu()
-// .then(newMenu => menu = newMenu)
-// .catch(() => menu = undefined)
-
 export async function createMenu(meals: { name: string; nutrition: string[]; }[]): Promise<any> {
     try {
         const food = addPriceToFood(meals);
         currentRetry = 0;
         console.log("Manager: Communication worked!!!")
-        menu = {guest: guestId++, food: food, drinks: drinks}
-        console.log("Manager: " + guestId);
+        menu = { guest: guestId++, food: food, drinks: drinks }
         return menu;
     } catch (error) {
         console.log("Manager: Communication with the cook did not work!");
@@ -33,19 +28,19 @@ export async function createMenu(meals: { name: string; nutrition: string[]; }[]
         await delay(100 * currentRetry);
         return (await createMenu(meals))
     }
-    
+
 }
 
 function checkCache() {
     if (currentRetry >= maxRetry && !isEmptyObject(menu)) {
-            console.log("Manager: Now we have to use the cache!")
-            currentRetry = 0;
-            return menu;
-        }
+        console.log("Manager: Now we have to use the cache!")
+        currentRetry = 0;
+        return menu;
+    }
 }
 
 function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
-    let food: MenuItem[]  = [];
+    let food: MenuItem[] = [];
 
     foodNames.forEach((item, index) => {
         const idNumber = ++index;
@@ -56,36 +51,37 @@ function addPriceToFood(foodNames: { name: string; nutrition: string[]; }[]) {
             price: price[index - 1],
         };
         food.push(foodItem);
-        }
+    }
     );
 
     return food;
 }
 
-export async function getMenuItemPrices(): Promise<{food: PriceItem[], drinks: PriceItem[]} | undefined> {
-        let foodPrices: PriceItem[] = [];
-        let drinkPrices: PriceItem[] = [];
+export async function getMenuItemPrices(): Promise<{ food: PriceItem[], drinks: PriceItem[] } | undefined> {
+    let foodPrices: PriceItem[] = [];
+    let drinkPrices: PriceItem[] = [];
 
-        if (!menu) return undefined;
 
-        menu?.food.forEach((foodItem: PriceItem) => {
-            const menuItem = {
-                id: foodItem.id,
-                price: foodItem.price
-            }
-            foodPrices.push(menuItem);
-            }
-        );
+    if (!menu) return undefined;
 
-        menu?.drinks.forEach((drinkItem: PriceItem) => {
-            const menuItem = {
-                id: drinkItem.id,
-                price: drinkItem.price
-            }
-            drinkPrices.push(menuItem);
-            }
-        );
+    menu?.food.forEach((foodItem: PriceItem) => {
+        const menuItem = {
+            id: foodItem.id,
+            price: foodItem.price
+        }
+        foodPrices.push(menuItem);
+    }
+    );
 
-        return {food: foodPrices, drinks: drinkPrices};
+    menu?.drinks.forEach((drinkItem: PriceItem) => {
+        const menuItem = {
+            id: drinkItem.id,
+            price: drinkItem.price
+        }
+        drinkPrices.push(menuItem);
+    }
+    );
+
+    return { food: foodPrices, drinks: drinkPrices };
 }
 
