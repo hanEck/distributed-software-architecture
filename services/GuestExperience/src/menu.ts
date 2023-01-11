@@ -11,14 +11,12 @@ const price = [20.2, 10.2, 5.3];
 let currentRetry = 0;
 const maxRetry = 3;
 
-createMenu()
-.then(newMenu => menu = newMenu)
-.catch(() => menu = undefined)
+// createMenu()
+// .then(newMenu => menu = newMenu)
+// .catch(() => menu = undefined)
 
-export async function createMenu(): Promise<any> {
+export async function createMenu(meals: { name: string; nutrition: string[]; }[]): Promise<any> {
     try {
-        const response = await fetch("http://FoodPreparation:8085/meals");
-        const meals = await response.json();
         const food = addPriceToFood(meals);
         currentRetry = 0;
         console.log("Manager: Communication worked!!!")
@@ -33,7 +31,7 @@ export async function createMenu(): Promise<any> {
         console.log("Manager: we have now retryed it for the " + currentRetry + " Time");
         checkCache();
         await delay(100 * currentRetry);
-        return (await createMenu())
+        return (await createMenu(meals))
     }
     
 }
