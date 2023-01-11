@@ -52,7 +52,7 @@ async function subscribeToPlacedOrderEvent(connection: amqp.Connection) {
 
         await channel.bindQueue(q.queue, exchange, '');
 
-        channel.consume(q.queue, async (msg) => {
+         await channel.consume(q.queue, async (msg) => {
             const receivedInformation = JSON.parse(msg.content.toString());
             await checkForSmokingBreak();
             console.log(`Received Message for que "placedOrder:" ${receivedInformation}`);
@@ -70,7 +70,7 @@ async function subscribeToDeliverFoodCommand(connection: amqp.Connection) {
     const queue = 'deliverFood';
     await channel.assertQueue(queue);
 
-    channel.consume(queue, async (msg) => {
+   await channel.consume(queue, async (msg) => {
         const preparedFood = JSON.parse(msg.content.toString())
         await checkForSmokingBreak(false);
         await findOrder(preparedFood, connection);
