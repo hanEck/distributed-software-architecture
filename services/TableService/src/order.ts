@@ -119,6 +119,7 @@ async function getWaitingTime() {
 
   const connection = await connectToRabbitMq();
   const channel = await connection.createChannel();
+  await channel.assertQueue("updateWaitingTime", { durable: true });
   channel.consume("updateWaitingTime", (message) => {
     const orderPosition = JSON.parse(message.content.toString());
     if (orderPosition.ordersBefore > highestOrderPosition) {

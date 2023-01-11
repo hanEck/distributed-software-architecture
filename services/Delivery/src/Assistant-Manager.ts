@@ -53,7 +53,7 @@ export default class AssistantManager {
         const message = JSON.stringify(deliveryBody);
 
         channel.assertQueue(queue, {
-            durable: false
+            durable: true
         });
         channel.sendToQueue(queue, Buffer.from(message));
     }

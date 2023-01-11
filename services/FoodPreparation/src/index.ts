@@ -33,7 +33,7 @@ broker.consumeEvent("placedOrder", (msg) => {
             console.log("Food Preparation: No Meal found under this id");
         } else {
             console.log("Food Preparation: Order is in queue");
-            broker.sendMessage("UpdateWaitingTime", ordersInQueue);
+            broker.sendMessage("updateWaitingTime", ordersInQueue);
         }
     } else {
         console.log("Food Preparation: Order is already in queue");
