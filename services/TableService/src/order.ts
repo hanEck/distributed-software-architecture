@@ -5,14 +5,14 @@ import amqp, { connect } from "amqplib";
 import { createConnection } from "net";
 
 let orderNumber = 1;
-let request_id = 1;
 const averageWaitingTimePerGuest = 4;
 const forgetfulnessThreshold =
   parseFloat(process.env.FORGETTABLE_WAITER_RATIO) || 0.1;
 
 export async function processOrder(order: Order) {
   const connection = await connectToRabbitMq();
-  await sendPlacedOrder(connection, order);
+  sendOrder(connection, order);
+
   const waitingTime = getWaitingTime();
 
   // const highestOrderPosition = await sendFoodToFoodPreparation(order);
@@ -22,56 +22,38 @@ export async function processOrder(order: Order) {
   return { waitingTime, order: orderNumber - 1 };
 }
 
-async function sendOrderToDelivery(order: Order) {
-  const sentOrder = {
+// async function sendOrderToDelivery(order: Order) {
+//   const sentOrder = {
+//     guest: order.guest,
+//     food: order.food,
+//     drinks: order.drinks || [],
+//     order: orderNumber,
+//   };
+//   orderNumber++;
+//   fetch("http://Delivery:8084/orderInformation", {
+//     method: "POST",
+//     body: JSON.stringify(sentOrder),
+//     headers: { "Content-Type": "application/json" },
+//   });
+// }
+
+async function sendOrder(connection: any, order: Order) {
+  const iForgot = Math.random();
+  const processedOrder = {
     guest: order.guest,
-    food: order.food,
+    food: order.food || [],
     drinks: order.drinks || [],
     order: orderNumber,
   };
   orderNumber++;
-  fetch("http://Delivery:8084/orderInformation", {
-    method: "POST",
-    body: JSON.stringify(sentOrder),
-    headers: { "Content-Type": "application/json" },
-  });
-}
 
-async function sendFoodToFoodPreparation(order: Order) {
-  const foodOrder = order.food;
-
-  if (!foodOrder?.length) {
-    console.log("ONLY DRINKS WERE ORDERED");
-    // waiting time should be 0
-    return 0;
-  }
-
-  let highestOrderPosition = 0;
-  const iForgot = Math.random();
-  let requestCount = 1;
   if (iForgot <= forgetfulnessThreshold) {
-    requestCount = 2;
     console.log("Duplicated order is being sent");
+    await sendPlacedOrder(connection, processedOrder);
+    await sendPlacedOrder(connection, processedOrder);
+  } else {
+    await sendPlacedOrder(connection, processedOrder);
   }
-  while (requestCount > 0) {
-    for (const foodId of foodOrder) {
-      const response = await fetch("http://FoodPreparation:8085/orderItem", {
-        method: "POST",
-        body: JSON.stringify({ id: foodId, order: orderNumber, request_id }),
-        headers: { "Content-Type": "application/json" },
-      });
-      const orderPosition = await response.json();
-      if (orderPosition > highestOrderPosition) {
-        highestOrderPosition = orderPosition;
-      }
-      request_id++;
-    }
-    if (requestCount === 2) {
-      request_id = request_id - foodOrder.length;
-    }
-    requestCount--;
-  }
-  return highestOrderPosition;
 }
 
 function calculateWaitingTime(highestOrderPosition: number) {
@@ -104,7 +86,7 @@ async function sendPlacedOrder(connection: amqp.Connection, order: any) {
 
     const routingKey = "newOrder";
     const eventBuffer = Buffer.from(JSON.stringify(order));
-    channel.publish(exchange,"", eventBuffer);
+    channel.publish(exchange, "", eventBuffer);
 
     setTimeout(function () {
       connection.close();
