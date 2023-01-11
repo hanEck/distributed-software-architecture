@@ -23,7 +23,8 @@ main();
 
 async function main() {
     const connection = await connectToRabbitMq();
-    await subscribeToPlacedOrderEvent(connection, "Hello, RabbitMQ!");
+    await subscribeToPlacedOrderEvent(connection);
+    await subscribeToDeliverFoodCommand(connection)
 }
 
 
@@ -42,7 +43,7 @@ async function connectToRabbitMq() {
     }
 }
 
-async function subscribeToPlacedOrderEvent(connection: amqp.Connection, message: string | ArrayBuffer | { valueOf(): ArrayBuffer | SharedArrayBuffer; }) {
+async function subscribeToPlacedOrderEvent(connection: amqp.Connection) {
     try {
         const channel = await connection.createChannel();
         const exchange = 'placedOrder';
@@ -53,21 +54,35 @@ async function subscribeToPlacedOrderEvent(connection: amqp.Connection, message:
 
         await channel.bindQueue(q.queue, exchange, '');
 
-        channel.consume(q.queue, (msg) => {
-            console.log(`Received Message for que "placedOrder:" ${msg}`);
-            const messageContent = JSON.parse(msg.content.toString());
-            manageOrder(messageContent);
-
-        },{noAck:true});
+        channel.consume(q.queue, async (msg) => {
+            const receivedInformation = JSON.parse(msg.content.toString());
+            await checkForSmokingBreak();
+            console.log(`Received Message for que "placedOrder:" ${receivedInformation}`);
+            manageOrder(receivedInformation, connection);
+        }, { noAck: true });
 
     } catch (error) {
         console.error("Error sending message:", error);
     }
 }
+async function subscribeToDeliverFoodCommand(connection: amqp.Connection) {
+
+    const channel = await connection.createChannel();
+
+    const queue = 'deliverFood';
+    await channel.assertQueue(queue);
+
+    channel.consume(queue, async (msg) => {
+        const preparedFood = JSON.parse(msg.content.toString())
+        await checkForSmokingBreak(false);
+        await findOrder(preparedFood, connection);
+    })
+
+}
 
 //############################################################################OLD CODE#############################################################
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
-app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
+/* app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async (req, res) => {
     const receivedInformation = req.body;
     await checkForSmokingBreak();
     console.log("Delivery: The delivery person is back from the smoking break!" + receivedInformation.order);
@@ -80,11 +95,11 @@ app.post<string, any, any, ReceivedOrderInformation>("/orderInformation", async 
         manageOrder(receivedInformation);
         res.status(200).send(checkedMessageBodyResult.errorMessage)
     }
-})
+}) */
 //////////////////////////////////////ReceivedOrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
-app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, res) => {
+/* app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, res) => {
     const preparedFood = req.body;
     await checkForSmokingBreak(false);
     const checkedMessageBodyResult = checkRequestBodyPreparedNotification(preparedFood)
@@ -99,7 +114,7 @@ app.post<string, any, any, PreparedFood>("/preparedNotification", async (req, re
     else {
         res.status(200).send(checkedMessageBodyResult.errorMessage);
     }
-})
+}) */
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

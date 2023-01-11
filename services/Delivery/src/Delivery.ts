@@ -5,6 +5,7 @@ import {
     ReceivedOrderInformation
 } from './interfaces'
 import AssistantManager from './Assistant-Manager';
+import amqp  from "amqplib";
 
 const guestOrders: GuestWithOrders[] = [];
 const assistantManagers = [
@@ -12,7 +13,7 @@ const assistantManagers = [
     new AssistantManager(),
     new AssistantManager()]
 //////////////////////////////////////receivedOrderInformation endpoint///////////////////////////////////////////////
-export async function manageOrder(receivedOrderInformation: ReceivedOrderInformation) {
+export async function manageOrder(receivedOrderInformation: ReceivedOrderInformation, connection: amqp.Connection) {
     let addedOrder: GuestWithOrder;
     if (guestOrders.find(order => order.guest === receivedOrderInformation.guest)) {
         addedOrder = addOrderToGuest(receivedOrderInformation)
@@ -28,7 +29,7 @@ export async function manageOrder(receivedOrderInformation: ReceivedOrderInforma
         }
     }
     const availableManager = await getAvailableManager();
-    await availableManager.sendOrderItems(drinksOrder);
+    await availableManager.sendOrderItems(drinksOrder, connection);
     removeDrinksFromOrder(drinksOrder.Order.order);
 }
 
@@ -63,12 +64,12 @@ function addOrderToGuest(orderInformation: ReceivedOrderInformation): GuestWithO
 //////////////////////////////////////receivedOrderInformation endpoint//////////////////////////////////////////////
 
 //////////////////////////////////////preparedNotification endpoint//////////////////////////////////////////////////
-export async function findOrder(preparedFood: PreparedFood) { 
+export async function findOrder(preparedFood: PreparedFood, connection: amqp.Connection) {
     let foodOrder: GuestWithOrder;
     //Helper collection to find the processed item for removal
     let itemIndices: any = {}
-    guestOrders.forEach((guest, indexGuest) => {       
-        guest.orders.find((order, indexOrder) => {   
+    guestOrders.forEach((guest, indexGuest) => {
+        guest.orders.find((order, indexOrder) => {
             if (order.order === preparedFood.order) {
                 itemIndices['guestId'] = indexGuest;
                 itemIndices["orderId"] = indexOrder;
@@ -88,15 +89,13 @@ export async function findOrder(preparedFood: PreparedFood) {
             }
         });
     })
-    
+
     if (foodOrder) {
         removeDeliverdFood(itemIndices);
         const availableManager = await getAvailableManager();
-        await availableManager.sendOrderItems(foodOrder);
+        await availableManager.sendOrderItems(foodOrder, connection);
         return foodOrder;
     }
-
-    return foodOrder;
 }
 
 function removeDrinksFromOrder(orderNumber: number) {
@@ -113,12 +112,12 @@ function removeDrinksFromOrder(orderNumber: number) {
 //Furthermore the collections the item is included in (order/guest) will also get
 //removed when they are empty
 function removeDeliverdFood(indices: any) {
-guestOrders[indices.guestId].orders[indices.orderId].food.splice(indices.mealId, 1);
+    guestOrders[indices.guestId].orders[indices.orderId].food.splice(indices.mealId, 1);
     if (guestOrders[indices.guestId].orders[indices.orderId].food.length === 0) {
         guestOrders[indices.guestId].orders.splice(indices.orderId, 1);
         if (guestOrders[indices.guestId].orders.length === 0) {
             guestOrders.splice(indices.guestId, 1)
-            
+
         }
     }
 }
