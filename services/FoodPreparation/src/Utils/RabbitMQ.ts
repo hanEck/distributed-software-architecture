@@ -1,15 +1,15 @@
 import amqp, { connect } from "amqplib";
-import { CookableMeal } from "../Types/types";
 
 export default class RabbitMQ  {
     connection: amqp.Connection;
-    instance: RabbitMQ;
+    static instance: RabbitMQ;
     constructor() {
+        this.connectToRabbitMq();
+    }
+    static getInstance() {
         if(!this.instance) {
-            this.instance = this;
-            this.connectToRabbitMq();
+            this.instance = new RabbitMQ();
         }
-
         return this.instance;
     }
 

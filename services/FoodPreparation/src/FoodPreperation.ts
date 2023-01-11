@@ -53,7 +53,7 @@ export default class FoodPreparation {
 
     private notifyDelivery(): void {
         const {id, order} = this.counter.shift();
-        const broker = new RabbitMQ();
+        const broker = RabbitMQ.getInstance();
         broker.sendMessage("deliverFood", {food: id, order: order});
     }
 }

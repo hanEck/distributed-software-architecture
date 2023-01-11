@@ -15,7 +15,7 @@ app.use((err: Error, req: any, res: any, next: any) => {
     next();
 });
 
-const broker = new RabbitMQ();
+const broker = RabbitMQ.getInstance();
 const foodPreparation = new FoodPreparation();
 const idempotencyPattern = new Idempotency();
 const cookableMeals = foodPreparation.getCookableMeals();
