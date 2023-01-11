@@ -4,8 +4,6 @@ import { PreparedFood, ReceivedOrderInformation } from './interfaces'
 import { manageOrder, findOrder } from './Delivery'
 import amqp, { connect } from "amqplib";
 
-const global = require('global');
-
 const port = parseInt(process.env.PORT, 10) || 3000;
 
 
@@ -50,7 +48,7 @@ async function subscribeToPlacedOrderEvent(connection: amqp.Connection) {
 
         await channel.assertExchange(exchange, 'fanout', { durable: true });
 
-        const q = await channel.assertQueue('orderPlacedDeliveryQueue', { exclusive: true });
+        const q = await channel.assertQueue('qDelivery', { exclusive: true });
 
         await channel.bindQueue(q.queue, exchange, '');
 

@@ -100,11 +100,11 @@ async function sendPlacedOrder(connection: amqp.Connection, order: any) {
 
     const exchange = "placedOrder";
 
-    await channel.assertExchange(exchange, "direct", { durable: true });
+    await channel.assertExchange(exchange, "fanout", { durable: true });
 
     const routingKey = "newOrder";
     const eventBuffer = Buffer.from(JSON.stringify(order));
-    channel.publish(exchange, routingKey, eventBuffer);
+    channel.publish(exchange,"", eventBuffer);
 
     setTimeout(function () {
       connection.close();

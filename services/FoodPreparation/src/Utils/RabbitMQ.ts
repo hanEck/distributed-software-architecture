@@ -50,8 +50,8 @@ export default class RabbitMQ  {
                 await this.connectToRabbitMq();
             }
             const channel = await this.connection.createChannel();
-            const queue = await channel.assertQueue('', { exclusive: true });
-            await channel.assertExchange(queueName, 'fanout', { durable: false });
+            const queue = await channel.assertQueue('qFoodPrep', { exclusive: true });
+            await channel.assertExchange(queueName, 'fanout', { durable: true });
             channel.bindQueue(queue.queue, queueName, '');
             channel.consume(queue.queue, (msg: amqp.Message) => {
                 if (msg !== null) {

@@ -35,7 +35,7 @@ export class RabbitMQ {
 			const channel = await this.connection.createChannel();
 
 			await channel.assertQueue(queueName, {
-				durable: false
+				durable: true
 			});
 
 			await channel.consume(queueName, callback);

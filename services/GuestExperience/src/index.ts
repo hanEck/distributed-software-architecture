@@ -31,7 +31,7 @@ async function sendMessage(connection: amqp.Connection, message: any) {
 		const channel = await connection.createChannel();
 		const queue = "updatePrices";
 
-		await channel.assertQueue(queue);
+		await channel.assertQueue(queue, { durable: true });
 		// @ts-ignore
 		channel.sendToQueue(queue, Buffer.from(message));
 
@@ -43,7 +43,7 @@ async function sendMessage(connection: amqp.Connection, message: any) {
 
 async function main() {
     connection = await connectToRabbitMq();
-	await sendMessage(connection, getPrices());
+	await sendMessage(connection, JSON.stringify(getPrices()));
     getFood()
 }
 
@@ -51,6 +51,7 @@ main().then(() => console.log("Sending test message successful!"));
 
 async function getFood() {
     const channel = await connection.createChannel();
+    await channel.assertQueue("updateFood", { durable: true });
     channel.consume("updateFood", (message) => {
         meals = JSON.parse(message.content.toString());
         createMenu(meals)
