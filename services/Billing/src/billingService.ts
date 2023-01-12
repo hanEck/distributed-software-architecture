@@ -13,10 +13,8 @@ export default class BillingService {
 
 	constructor() {
 		this.rabbitmq = new RabbitMQ();
-		( async () => {
-			await this.subscribeToMenu();
-			await this.subscribeToDeliveries();
-		} )();
+		this.subscribeToMenu();
+		this.subscribeToDeliveries();
 	}
 
 	private async subscribeToMenu(): Promise<void> {
@@ -29,7 +27,7 @@ export default class BillingService {
 				if (!data || !data?.content) return console.log("Cashier: No data from Guest Experience received");
 				const content = JSON.parse(data?.content?.toString());
 				if (!content) return console.log("Cashier: No content in the data Guest Experience received");
-				if (!this.isMenu(content)) return console.log("Cashier: Wrong data type menu from Guest Experience received");
+				if (!this.isMenu(content)) return console.log("Cashier: Wrong menu data type received from Guest Experience");
 				this.menu = content;
 				console.log("Cashier: Got the menu from Manager.");
 			});

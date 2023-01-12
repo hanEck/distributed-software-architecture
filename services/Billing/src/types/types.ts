@@ -55,7 +55,6 @@ export enum PAYMENT_METHOD {
 
 export interface MenuItem {
 	id: number;
-	name: string;
 	price: number;
 }
 
