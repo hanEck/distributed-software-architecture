@@ -14,9 +14,9 @@ export async function processOrder(
     callback: (responseData: {waitingTime: number; order: number}) => void
 ) {
     const connection = await connectToRabbitMq();
-    sendOrder(connection, order);
+    await sendOrder(connection, order);
 
-    getWaitingTime(callback, orderNumber - 1);
+    await getWaitingTime(connection, callback, orderNumber - 1);
 
     // const highestOrderPosition = await sendFoodToFoodPreparation(order);
     // await sendOrderToDelivery(order);
@@ -89,21 +89,23 @@ async function sendPlacedOrder(connection: amqp.Connection, order: any) {
         const eventBuffer = Buffer.from(JSON.stringify(order));
         channel.publish(exchange, "", eventBuffer);
 
-        setTimeout(function () {
+        /* setTimeout(function () {
             connection.close();
-        }, 500);
+        }, 500); */
     } catch (error) {
         console.error("Error sending message:", error);
     }
 }
 
 async function getWaitingTime(
+    connection: amqp.Connection,
     callback: (responseData: {waitingTime: number; order: number}) => void,
     order: number
 ) {
-    const connection = await connectToRabbitMq();
     const channel = await connection.createChannel();
     await channel.assertQueue("updateWaitingTime", {durable: true});
+
+    // TODO: Maybe create a promise and pass the resolve method in the consume callback
     channel.consume("updateWaitingTime", (message) => {
         const highestOrderPosition = JSON.parse(message.content.toString());
         console.log(
@@ -114,4 +116,55 @@ async function getWaitingTime(
         callback({waitingTime, order});
         connection.close();
     });
+
+    /*await channel.assertQueue("updateWaitingTime", {
+        durable: true,
+    });
+     .then(async () => {
+            setTimeout(async () => {
+                const message = await channel.get("updateWaitingTime");
+                console.log(message);
+
+                const highestOrderPosition = JSON.parse(message.toString());
+                console.log(
+                    `Received Message for queue updateWaitingTime: ${highestOrderPosition}`
+                );
+                const waitingTime = calculateWaitingTime(highestOrderPosition);
+                console.log(`Waiting Time: ${waitingTime}`);
+                message = message || 5;
+                callback({waitingTime, order});
+            }, 500);
+        }); */
+
+    /* let msg = "";
+
+    await channel.consume("updateWaitingTime", (message) => {
+        if (message !== null) {
+            channel.ack(message);
+            console.log(message);
+
+            msg = message.content.toString();
+            console.log(msg);
+
+            const highestOrderPosition = JSON.parse(msg.toString());
+            console.log(
+                `Received Message for queue updateWaitingTime: ${highestOrderPosition}`
+            );
+            const waitingTime = calculateWaitingTime(highestOrderPosition);
+            console.log(`Waiting Time: ${waitingTime}`);
+
+            callback({waitingTime, order});
+        }
+    }); */
+
+    /* channel.consume("updateWaitingTime", (message) => {
+        const highestOrderPosition = JSON.parse(message.content.toString());
+        console.log(
+            `Received Message for queue updateWaitingTime: ${highestOrderPosition}`
+        );
+        const waitingTime = calculateWaitingTime(highestOrderPosition);
+        console.log(`Waiting Time: ${waitingTime}`);
+        callback({waitingTime, order});
+        // connection.close();
+    }); */
 }
