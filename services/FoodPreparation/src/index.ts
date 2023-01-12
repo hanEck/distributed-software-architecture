@@ -23,23 +23,24 @@ const cookableMeals = foodPreparation.getCookableMeals();
 broker.sendMessage("updateFood", cookableMeals);
 
 broker.consumeEvent("placedOrder", (msg) => {
-    const {food, order} = JSON.parse(msg.content.toString());
+    const {food = undefined, order} = JSON.parse(msg.content.toString());
+
     if(food === undefined || order === undefined) {
         console.log("Food Preparation: You tried to submit an empty order");
-    }
-    if(idempotencyPattern.checkMessage(order)) {
-        let ordersInQueue;
-        food.forEach((id: number) => {      
-            ordersInQueue = foodPreparation.takeOrder(id,order);
-            if(!ordersInQueue) {
-                console.log("Food Preparation: No Meal found under this id");
-            } else {
-                console.log("Food Preparation: Order is in queue");
-            }
-        });
-        broker.sendMessage("updateWaitingTime", ordersInQueue);
-    } else {
-        console.log("Food Preparation: Order is already in queue");
+        if(idempotencyPattern.checkMessage(order)) {
+            let ordersInQueue;
+            food.forEach((id: number) => {      
+                ordersInQueue = foodPreparation.takeOrder(id,order);
+                if(!ordersInQueue) {
+                    console.log("Food Preparation: No Meal found under this id");
+                } else {
+                    console.log("Food Preparation: Order is in queue");
+                }
+            });
+            broker.sendMessage("updateWaitingTime", ordersInQueue);
+        } else {
+            console.log("Food Preparation: Order is already in queue");
+        }
     }
 });
 
