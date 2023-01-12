@@ -270,3 +270,73 @@ which does not quite meet the error message itself. I guess a solution would be 
 Unexpected errors occurred, that were not directly linked to a certain error we implemented. For example were causing two fallacies together a new error. Debugging was very hard in some cases because of that.
 
 ---
+
+## Part III: Decoupling via Messages
+
+### Timetable
+
+| Date       | Activity Log                            |
+|------------|-----------------------------------------|
+| 2023-01-07 | Defining contracts + including RabbitMQ |
+| 2023-01-08 | Implementation of contracs              |
+| 2023-01-11 | Merge + Testing Meeting                 |
+| 2023-01-12 | Testing Meeting                         |
+
+### Log
+
+- Defining contracts
+- including RabbitMQ
+- Implementation of contracs
+- Merge
+- Fixing Bugs
+- Testing the system
+- Fixing Bugs
+- Final Merge and testing
+
+### Food preparation
+
+###### Approach
+
+
+
+### Billing
+
+###### Approach
+
+
+
+###### Problems
+
+
+
+### Delivery
+
+###### Approach
+
+
+
+###### Problems
+
+
+
+### Table Service
+
+###### Approach
+
+
+
+### Guest Experience
+
+###### Approach
+1. Defining contracts between: Billing and Food Preperation, for both we use a Command
+2. get connection to RabbitMQ
+3. implementation of getFood() 
+4.  
+
+
+###### Problems
+
+
+### General Problems
+
+---
