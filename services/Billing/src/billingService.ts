@@ -184,11 +184,10 @@ export default class BillingService {
 
 			await this.rabbitmq.receiveMessage("billDelivery", (data) => {
 				if (!data) console.error("No data received");
-				const deliveryId = data.properties.headers["deliveryId"];
 				const parsedData = JSON.parse(data.content.toString());
 
 				if (!this.isItemRegistration(parsedData)) return console.log("Received data doesn't match the required data type.");
-				const { food, drinks } = parsedData;
+				const { food, drinks, deliveryId } = parsedData;
 
 				if (!deliveryId) {
 					console.log("Cashier: I need a delivery Id to identify the delivery");
@@ -242,6 +241,7 @@ export default class BillingService {
 	private isItemRegistration(itemRegistration: any): itemRegistration is ItemRegistration {
 		return typeof itemRegistration === "object" &&
 			itemRegistration !== null &&
+			itemRegistration.hasOwnProperty("deliveryId") &&
 			itemRegistration.hasOwnProperty("guest") &&
 			typeof +itemRegistration["guest"] === "number" &&
 			itemRegistration.hasOwnProperty("order") &&

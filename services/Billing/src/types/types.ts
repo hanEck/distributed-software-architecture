@@ -36,6 +36,7 @@ export interface BillPayment {
 }
 
 export interface ItemRegistration {
+	deliveryId: number;
 	guest: number; // id of the guest
 	order: number; // id of the order
 	food: number[];
