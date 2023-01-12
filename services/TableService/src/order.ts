@@ -9,17 +9,18 @@ const averageWaitingTimePerGuest = 4;
 const forgetfulnessThreshold =
     parseFloat(process.env.FORGETTABLE_WAITER_RATIO) || 0.1;
 
-export async function processOrder(order: Order) {
+export async function processOrder(
+    order: Order,
+    callback: (responseData: {waitingTime: number; order: number}) => void
+) {
     const connection = await connectToRabbitMq();
     sendOrder(connection, order);
 
-    const waitingTime = getWaitingTime();
+    getWaitingTime(callback, orderNumber - 1);
 
     // const highestOrderPosition = await sendFoodToFoodPreparation(order);
     // await sendOrderToDelivery(order);
     // const waitingTime = calculateWaitingTime(highestOrderPosition);
-
-    return {waitingTime, order: orderNumber - 1};
 }
 
 // async function sendOrderToDelivery(order: Order) {
@@ -96,7 +97,10 @@ async function sendPlacedOrder(connection: amqp.Connection, order: any) {
     }
 }
 
-async function getWaitingTime() {
+async function getWaitingTime(
+    callback: (responseData: {waitingTime: number; order: number}) => void,
+    order: number
+) {
     const connection = await connectToRabbitMq();
     const channel = await connection.createChannel();
     await channel.assertQueue("updateWaitingTime", {durable: true});
@@ -107,6 +111,7 @@ async function getWaitingTime() {
         );
         const waitingTime = calculateWaitingTime(highestOrderPosition);
         console.log(`Waiting Time: ${waitingTime}`);
-        return waitingTime;
+        callback({waitingTime, order});
+        connection.close();
     });
 }
