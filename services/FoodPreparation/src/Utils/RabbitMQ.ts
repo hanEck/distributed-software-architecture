@@ -37,7 +37,7 @@ export default class RabbitMQ  {
     
             await channel.assertQueue(queueName, { durable: true });
             channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)));
-            console.log(`Sent message: ${message}`);
+            console.log(`${queueName}: Sent message: ${message}`);
         } catch (error) {
             console.error("Error sending message:", error);
         } finally {

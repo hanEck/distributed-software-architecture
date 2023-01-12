@@ -28,15 +28,16 @@ broker.consumeEvent("placedOrder", (msg) => {
         console.log("Food Preparation: You tried to submit an empty order");
     }
     if(idempotencyPattern.checkMessage(order)) {
+        let ordersInQueue;
         food.forEach((id: number) => {      
-            const ordersInQueue = foodPreparation.takeOrder(id,order);
+            ordersInQueue = foodPreparation.takeOrder(id,order);
             if(!ordersInQueue) {
                 console.log("Food Preparation: No Meal found under this id");
             } else {
                 console.log("Food Preparation: Order is in queue");
-                broker.sendMessage("updateWaitingTime", ordersInQueue);
             }
         });
+        broker.sendMessage("updateWaitingTime", ordersInQueue);
     } else {
         console.log("Food Preparation: Order is already in queue");
     }
