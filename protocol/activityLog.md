@@ -277,16 +277,20 @@ Unexpected errors occurred, that were not directly linked to a certain error we 
 
 | Date       | Activity Log                            |
 |------------|-----------------------------------------|
-| 2023-01-07 | Defining contracts + including RabbitMQ |
+| 2023-01-06 | including RabbitMQ |
+| 2023-01-07 | Defining contracts |
 | 2023-01-08 | Implementation of contracs              |
+| 2023-01-09 | Created a diagram for the messaging topology             |
 | 2023-01-11 | Merge + Testing Meeting                 |
 | 2023-01-12 | Testing Meeting                         |
 
 ### Log
 
+- Including RabbitMQ
 - Defining contracts
-- including RabbitMQ
-- Implementation of contracs
+- Created a diagram for the messaging topology
+    - ![Messaging Topology](./images/messaging-topology.png)
+- Implementation of contracts with asyncapi
 - Merge
 - Fixing Bugs
 - Testing the system
@@ -296,47 +300,89 @@ Unexpected errors occurred, that were not directly linked to a certain error we 
 ### Food preparation
 
 ###### Approach
+1. Created `RabbitMQ` singleton class for connection to RabbitMQ and sending and receiving messages
+2. removed Http Endpoints 
+3. implemented eventListener for `placedOrder` Event 
+ - old logic is used to handle Order logic 
+ - instead of one food item per request the Event contains the entire order
+4. To return the waitingTime to TableService the `updateWaitingTime` command is sent
+5. `updateFood` Command is sent at the innitalization of the service
+6. once a orderItem is prepared `deliverFood` command is sent to Delivery
+7. Merge
+8. Fixing Bugs
+9. Testing
 
 
+###### Problems
+1. Removed BUSY COOK fallacy because request was removed for command
 
 ### Billing
 
 ###### Approach
-
-
+1. Created a `RabbitMQ` class for communication
+2. Use and initialize `RabbitMQ` class in `BillingService` class
+3. Changed `getMenu` function to `subscribeToMenu` function, which listens to "updatePrices" commands from GuestExperience
+4. Added the function `subscribeToDeliveries`, which listens to new delivery commands ("billDelivery") from Delivery
+5. Added `subscribeToMenu` and `subscribeToDeliveries` to constructor to start listening to commands
+6. Added Type Guards to check 
+ the received data meets the expected type
+7. Removed unnecessary code like the "registerDelivery" endpoint, some error handling and the fallacy, which blocks deliveries since it doesn't make sense anymore
+8. Merging
+9. Small adjustments and fixes after merging
+10. Testing
 
 ###### Problems
-
+-
+* Changes in data structure, like "deliveryId" were not communicated directly -> it was in the header previously and was moved to the response body -> the code had to be adjusted twice
+* getting the system running again was a little bit hard since fixes had to be done step by step
 
 
 ### Delivery
 
 ###### Approach
-
-
+1. After agreeing on contracts making own concept for implementation
+2. Implementing connection to `RabbitMQ`
+3. Creating subscription to event `placedOrder` of `Table service`
+4. Creating subscription to command `deliverFood` of `Food preparation`
+5. Refactoring RPC redundant code
+6. Defining command `billDelivery` to `Billing`
+7. Merge code and do testing
+8. Alling message properties
+9. Merge again
+10. Final testing
 
 ###### Problems
-
+-Inconsistency in connection properties leaded to connection issues
+-Understanding differnence between `Exchange` and `Queue`
+-Implementing existing business logic with new way of communication
 
 
 ### Table Service
 
 ###### Approach
+1. Contract definition: I send an event to `Food Preperation` and `Delivery`
+2. 
 
 
 
 ### Guest Experience
 
 ###### Approach
-1. Defining contracts between: Billing and Food Preperation, for both we use a Command
+1. Defining contracts between: `Billing` and `Food Preperation`, both are `Commands`
 2. get connection to RabbitMQ
-3. implementation of getFood() 
-4.  
+3. creating Channel to listen to command from `Food Preperation` to get the food which creats then the menu 
+4. implemntation of sending the prices to `Billing` via `Command`
+5. removed Http Endpoints
+6. Merge all Services together
+7. Fixing the new problems that occurred after the merge
+8. Final merge and testing
 
 
 ###### Problems
+- Messages could only be tested after the merge with all services
 
 
 ### General Problems
+- Keeping all queue Names and options consistent
 
 ---
