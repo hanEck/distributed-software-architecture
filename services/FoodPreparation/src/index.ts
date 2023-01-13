@@ -23,10 +23,11 @@ const cookableMeals = foodPreparation.getCookableMeals();
 broker.sendMessage("updateFood", cookableMeals);
 
 broker.consumeEvent("placedOrder", (msg) => {
-    const {food = undefined, order} = JSON.parse(msg.content.toString());
-
-    if(food === undefined || order === undefined) {
+    const {food, order} = JSON.parse(msg.content.toString());  
+    
+    if(!food != null || order != null) {
         console.log("Food Preparation: You tried to submit an empty order");
+    } else {
         if(idempotencyPattern.checkMessage(order)) {
             let ordersInQueue;
             food.forEach((id: number) => {      
