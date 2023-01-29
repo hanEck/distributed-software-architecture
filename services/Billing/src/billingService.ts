@@ -1,4 +1,4 @@
-import { Bill, GuestBill, GuestOrders, ItemRegistration, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
+import { Bill, GuestBill, GuestOrders, ItemRegistration, Log, LOG_TYPE, Menu, PaidBill, PAYMENT_METHOD } from "./types/types";
 import { RabbitMQ } from "./rabbitmq";
 
 const MAX_RETRY_COUNT = 5;
@@ -21,7 +21,15 @@ export default class BillingService {
 		// get menu from guest experience
 
 		try {
-			console.log("Cashier: Listening to the menu from Manager.");
+            console.log({
+                type: LOG_TYPE.INFO,
+                timestamp:Date.now(),
+                serviceName: "Billing",
+                event: {
+                    method: "subscribeToMenu",
+                    message: "Listening to the menu from Manager."
+                }
+            } as Log);
 
 			await this.rabbitmq.receiveMessage("updatePrices", (data) => {
 				if (!data || !data?.content) return console.log("Cashier: No data from Guest Experience received");
@@ -29,11 +37,26 @@ export default class BillingService {
 				if (!content) return console.log("Cashier: No content in the data Guest Experience received");
 				if (!this.isMenu(content)) return console.log("Cashier: Wrong menu data type received from Guest Experience");
 				this.menu = content;
-				console.log("Cashier: Got the menu from Manager.");
-			});
+                console.log({
+                    type: LOG_TYPE.INFO,
+                    timestamp:Date.now(),
+                    serviceName: "Billing",
+                    event: {
+                        method: "subscribeToMenu",
+                        message: "Got the menu from Manager."
+                    }
+			    } as Log);
+            });
 		} catch (e) {
-			console.log("Cashier: Couldn't get menu from Manager. Reason:");
-			console.error(e.message);
+            console.log({
+                type: LOG_TYPE.ERROR,
+                timestamp:Date.now(),
+                serviceName: "Billing",
+                event: {
+                    method: "subscribeToMenu",
+                    message: "Couldn't get menu from Manager. Reason: " + e.message
+                }
+            } as Log);
 		}
 	}
 

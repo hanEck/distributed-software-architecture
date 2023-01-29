@@ -1,6 +1,6 @@
 import {Console} from "console";
 import fetch from "node-fetch";
-import {Order} from "./types";
+import {Log, LOG_TYPE, Order} from "./types";
 import amqp, {connect} from "amqplib";
 import {createConnection} from "net";
 
@@ -72,10 +72,27 @@ async function connectToRabbitMq() {
             username: process.env.RABBITMQ_DEFAULT_USER || "admin",
             password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234",
         });
-        console.log("Successfully connected to RabbitMQ");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "tableService",
+            event: {
+                method: "connectToRabbitMq",
+                message: "Successfully connected to RabbitMQ"
+            }
+        } as Log);
         return connection;
     } catch (error) {
         console.error("Error connecting to RabbitMQ:", error);
+        console.log({
+            type: LOG_TYPE.ERROR,
+            timestamp:Date.now(),
+            serviceName: "TableService",
+            event: {
+                method: "connectToRabbitMq",
+                message: "Error connecting to RabbitMQ"
+            }
+        } as Log);
     }
 }
 
@@ -98,7 +115,16 @@ async function sendPlacedOrder(order: any) {
             connection.close();
         }, 500); */
     } catch (error) {
-        console.error("Error sending message:", error);
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "TableService",
+            event: {
+                method: "publishToQueue placedOrder",
+                order: order,
+                message: "Error sending message to RabbitMQ"
+            }
+        } as Log);
     }
 }
 
@@ -110,11 +136,16 @@ async function listenForWaitingTime() {
     await channel.assertQueue("updateWaitingTime", {durable: true});
     channel.consume("updateWaitingTime", (message: any) => {
         const highestOrderPosition = JSON.parse(message.content.toString());
-        console.log(
-            `Received Message for queue updateWaitingTime: ${highestOrderPosition}`
-        );
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "TableService",
+            event: {
+                method: "consume updateWaitingTime",
+                message: "Received Message for queue updateWaitingTime" + highestOrderPosition
+            }
+        } as Log);
         waitingTime = calculateWaitingTime(highestOrderPosition);
-        console.log(`Waiting Time: ${waitingTime}`);
     });
 }
 listenForWaitingTime();
