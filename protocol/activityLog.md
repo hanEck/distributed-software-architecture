@@ -405,3 +405,36 @@ Unexpected errors occurred, that were not directly linked to a certain error we 
 -   Keeping all queue Names and options consistent
 
 ---
+
+## Part IV: Scaling
+
+### Timetable
+
+| Date       | Activity Log                     |
+| ---------- | -------------------------------- |
+| 2023-01-29 | Implement Healthchecks + Logging |
+
+### Log
+
+-   Defined universal log format with timestamp, serviceName, method and message
+-   Changed logs to follow defined format
+-   Added healthcheck endpoints for all services with load testing
+-   Added healthcheck to docker-compose file and restart on fail
+-   Moved Environment variables to global .env file
+
+#### Log Format
+
+```{Typescript}
+    interface Log {
+    type: LOG_TYPE,
+    timestamp: number,
+    serviceName: string,
+    event: {
+        method: string,
+        order?: number,
+        message: string
+    }
+}
+```
+
+---
