@@ -28,7 +28,7 @@ broker.consumeEvent("placedOrder", (msg) => {
     if(!food != null || order != null) {
         console.log({
             type: LOG_TYPE.INFO,
-            timestamp:Date.now(),
+            timestamp: Date.now(),
             serviceName: "Food Preparation",
             event: {
                 method: "received placedOrder Event",
