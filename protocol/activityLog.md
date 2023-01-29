@@ -405,3 +405,48 @@ Unexpected errors occurred, that were not directly linked to a certain error we 
 -   Keeping all queue Names and options consistent
 
 ---
+
+## Part IV: Scaling
+
+### Timetable
+
+| Date       | Activity Log                     |
+| ---------- | -------------------------------- |
+| 2023-01-29 | Implement Healthchecks + Logging |
+
+### Log
+
+-   Defined universal log format with timestamp, serviceName, method and message
+-   Changed logs to follow defined format
+-   Added healthcheck endpoints (/health) for all services with load testing
+-   Added healthchecks to docker-compose file and restart on fail
+-   Moved Environment variables to global .env file (.env file is pushed to the repo since there are no senstive things in there in our case)
+
+##### Logging Format
+
+We defined the logging format the following way as a TypeScript interface:
+
+```{TypeScript}
+interface Log {
+    type: LOG_TYPE,
+    timestamp: number,
+    serviceName: string,
+    event: {
+        method: string,
+        order?: number,
+        message: string
+    }
+}
+```
+
+Type defines the kind of log and is of type LOG_TYPE, which is an enum containing the values INFO, WARN, ERROR and DEBUG. The value is set accordingly when logging and could be used to filter by severity in a monitoring environment.
+The property timestamp are the milliseconds elapsed since epoch (midnight at the beginning of January 1, 1970, UTC). This could be used to identify the correct order of the logs.
+ServiceName contains the name of the service, where the log happened. This could be used to separate the logs by service when implementing a monitoring dashboard.
+The event property is an object, containing the method (the function where the log occured), the order number (if available) and the log message itself.
+
+##### Health Checks
+
+The health checks are defined in the docker compose file as a simple curl command (curl -f http://{serviceName}:{servicePort}/health). The health check parameters like interval, timeout, retries and the start period are defined in the env file. We set those parameters to values we found appropriate.
+The health check endpoints simply return a response with code 200 and a message, when reachable. Before that is a another condition to check the system load (CPU and memory). If the load is to high or to less memory remains the endpoint returns status code 500 with a message stating that the service is unhealthy.
+
+---
