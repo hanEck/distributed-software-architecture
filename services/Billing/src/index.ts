@@ -1,14 +1,31 @@
 import express = require("express");
 import { BillPayment, ErrorMessage, GuestBill, GuestOrders, PaidBill, PAYMENT_METHOD } from "./types/types";
 import BillingService from "./billingService";
+import * as os from "os";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
-const BUSY_THRESHOLD = parseFloat(process.env.BUSY_THRESHOLD) || 0.1;
 
 const app = express();
 app.use(express.json());
 
 const billingService = new BillingService();
+
+// service health check
+app.get("/health", (req, res) => {
+	const mem = os.freemem();
+	const cpu = os.loadavg()[0];
+
+	if (mem < 100000000 || cpu > 5) {
+		console.warn("Billing unhealthy");
+		return res.status(500).send({
+			message: "Billing Service is unhealthy"
+		});
+	}
+
+	return res.send({
+		message: "Billing Service is healthy"
+	});
+});
 
 // Generates the bill for a guest with all unpaid but delivered items
 app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId", (req, res) => {

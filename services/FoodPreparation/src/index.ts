@@ -1,8 +1,9 @@
 import express = require("express");
 import FoodPreparation from "./FoodPreperation";
-import { CookableMeal, OrderItem } from "./Types/types";
 import Idempotency from "./Utils/Idempotency";
 import RabbitMQ from "./Utils/RabbitMQ";
+import * as os from "os";
+
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const app = express();
@@ -13,6 +14,23 @@ app.use((err: Error, req: any, res: any, next: any) => {
         return res.status(400).send({ status: 404, message: "Invalid JSON" }); // Bad request
     }
     next();
+});
+
+// service health check
+app.get("/health", (req, res) => {
+    const mem = os.freemem();
+    const cpu = os.loadavg()[0];
+
+    if (mem < 100000000 || cpu > 5) {
+        console.warn("Food Preparation Service unhealthy");
+        return res.status(500).send({
+            message: "Food Preparation Service is unhealthy"
+        });
+    }
+
+    return res.send({
+        message: "Food Preparation Service is healthy"
+    });
 });
 
 const broker = RabbitMQ.getInstance();

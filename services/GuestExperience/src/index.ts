@@ -1,13 +1,32 @@
 import express = require("express");
 import { createMenu, getMenuItemPrices } from "./menu";
-import { delay, getPossibleDelay } from "./utils";
+import { delay } from "./utils";
 import amqp, { connect } from "amqplib";
-import { Response } from "express-serve-static-core";
 import { Menu } from "./types/types";
+import * as os from "os";
+
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
 const app = express();
+
+// service health check
+app.get("/health", (req, res) => {
+    const mem = os.freemem();
+    const cpu = os.loadavg()[0];
+
+    if (mem < 100000000 || cpu > 5) {
+        console.warn("Guest Experience Service unhealthy");
+        return res.status(500).send({
+            message: "Guest Experience Service is unhealthy"
+        });
+    }
+
+    return res.send({
+        message: "Guest Experience Service is healthy"
+    });
+});
+
 let meals: { name: string; nutrition: string[]; }[];
 let connection: amqp.Connection;
 

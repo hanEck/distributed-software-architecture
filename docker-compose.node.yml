@@ -9,6 +9,7 @@ services:
         image: mcr.microsoft.com/dotnet/sdk:6.0
         ports:
         - "8080:8080"
+        restart: unless-stopped
         volumes:
         - ./customer:/var/www/html:rw#
         depends_on:
@@ -27,6 +28,13 @@ services:
         image: node:16
         ports:
         - "8085:8085"
+        healthcheck:
+            test: curl -f http://localhost:8085/health || exit 1
+            interval: 60s
+            timeout: 10s
+            retries: 2
+            start_period: 30s
+        restart: unless-stopped
         volumes:
         - ./services/FoodPreparation:/services
         depends_on:
@@ -44,6 +52,13 @@ services:
         image: node:16
         ports:
         - "8081:8081"
+        healthcheck:
+            test: curl -f http://localhost:8081/health || exit 1
+            interval: 60s
+            timeout: 10s
+            retries: 2
+            start_period: 30s
+        restart: unless-stopped
         volumes:
         - ./services/GuestExperience:/services
         working_dir: /services
@@ -63,6 +78,13 @@ services:
         image: node:16
         ports:
         - "8084:8084"
+        healthcheck:
+            test: curl -f http://localhost:8084/health || exit 1
+            interval: 60s
+            timeout: 10s
+            retries: 2
+            start_period: 30s
+        restart: unless-stopped
         volumes:
         - ./services/Delivery:/services
         working_dir: /services
@@ -84,6 +106,13 @@ services:
         image: node:16
         ports:
         - "8083:8083"
+        healthcheck:
+            test: curl -f http://localhost:8083/health || exit 1
+            interval: 60s
+            timeout: 10s
+            retries: 2
+            start_period: 30s
+        restart: unless-stopped
         volumes:
         - ./services/Billing:/services
         working_dir: /services
@@ -104,6 +133,13 @@ services:
         image: node:16
         ports:
         - "8082:8082"
+        healthcheck:
+            test: curl -f http://localhost:8082/health || exit 1
+            interval: 60s
+            timeout: 10s
+            retries: 2
+            start_period: 30s
+        restart: unless-stopped
         volumes:
         - ./services/TableService:/services
         working_dir: /services
@@ -126,6 +162,13 @@ services:
         ports:
         - "5672:5672"
         - "15672:15672"
+        healthcheck:
+            test: rabbitmq-diagnostics -q ping || exit 1
+            interval: 30s
+            timeout: 10s
+            retries: 2
+            start_period: 30s
+        restart: unless-stopped
         volumes:
         - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
         - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq

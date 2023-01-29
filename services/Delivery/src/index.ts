@@ -3,6 +3,7 @@ import bodyParser = require("body-parser");
 import { PreparedFood, ReceivedOrderInformation } from './interfaces'
 import { manageOrder, findOrder } from './Delivery'
 import amqp, { connect } from "amqplib";
+import * as os from "os";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
@@ -18,6 +19,23 @@ app.use((req, res, next) => {
 });
 
 main();
+
+// service health check
+app.get("/health", (req, res) => {
+    const mem = os.freemem();
+    const cpu = os.loadavg()[0];
+
+    if (mem < 100000000 || cpu > 5) {
+        console.warn("Delivery Service unhealthy");
+        return res.status(500).send({
+            message: "Delivery Service is unhealthy"
+        });
+    }
+
+    return res.send({
+        message: "Delivery Service is healthy"
+    });
+});
 
 async function main() {
     const connection = await connectToRabbitMq();
