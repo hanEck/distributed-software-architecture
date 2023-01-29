@@ -28,21 +28,23 @@ services:
         image: node:16
         ports:
         - "8085:8085"
+        env_file:
+        -   ".env"
         healthcheck:
             test: curl -f http://localhost:8085/health || exit 1
-            interval: 60s
-            timeout: 10s
-            retries: 2
-            start_period: 30s
+            interval: ${HC_INTERVAL}
+            timeout: ${HC_TIMEOUT}
+            retries: ${HC_RETRIES}
+            start_period: ${HC_START_PERIOD}
         restart: unless-stopped
         volumes:
         - ./services/FoodPreparation:/services
         depends_on:
         - RabbitMQ
         environment:
-            PORT: 8085
-            API_DELIVERY: http://Delivery:8084
-            BUSY_COOK: 0.1
+            PORT: ${FOOD_PREP_PORT}
+            API_DELIVERY: ${API_DELIVERY}
+            BUSY_COOK: ${BUSY_COOK}
         working_dir: /services
         command: bash -c "npm install && npm run start"
         networks:
@@ -52,12 +54,14 @@ services:
         image: node:16
         ports:
         - "8081:8081"
+        env_file:
+        -   ".env"
         healthcheck:
             test: curl -f http://localhost:8081/health || exit 1
-            interval: 60s
-            timeout: 10s
-            retries: 2
-            start_period: 30s
+            interval: ${HC_INTERVAL}
+            timeout: ${HC_TIMEOUT}
+            retries: ${HC_RETRIES}
+            start_period: ${HC_START_PERIOD}
         restart: unless-stopped
         volumes:
         - ./services/GuestExperience:/services
@@ -66,10 +70,10 @@ services:
         - FoodPreparation
         - RabbitMQ
         environment:
-            PORT: 8081
-            API_FOODPREPERATION: http://FoodPreparation:8085
-            OVERWORKED_MANAGER: 0.1
-            OVERWORKED_MANAGER_DELAY: 60
+            PORT: ${GUEST_EXP_PORT}
+            API_FOODPREPERATION: ${API_FOOD_PREP}
+            OVERWORKED_MANAGER: ${OVERWORKED_MANAGER}
+            OVERWORKED_MANAGER_DELAY: ${OVERWORKED_MANAGER_DELAY}
         command: bash -c "npm install && npm run start"
         networks:
         - restaurant-kata
@@ -78,12 +82,14 @@ services:
         image: node:16
         ports:
         - "8084:8084"
+        env_file:
+        -   ".env"
         healthcheck:
             test: curl -f http://localhost:8084/health || exit 1
-            interval: 60s
-            timeout: 10s
-            retries: 2
-            start_period: 30s
+            interval: ${HC_INTERVAL}
+            timeout: ${HC_TIMEOUT}
+            retries: ${HC_RETRIES}
+            start_period: ${HC_START_PERIOD}
         restart: unless-stopped
         volumes:
         - ./services/Delivery:/services
@@ -91,13 +97,13 @@ services:
         depends_on:
         - RabbitMQ
         environment:
-            PORT: 8084
-            API_CUSTOMER: http://Customer:8080
-            API_BILLING: http://Billing:8083
-            SLOW_DELIVERY: 0.1
-            SLOW_DELIVERY_DELAY: 60000
-            RABBITMQ_DEFAULT_USER: admin
-            RABBITMQ_DEFAULT_PASS: admin1234
+            PORT: ${DELIVERY_PORT}
+            API_CUSTOMER: ${API_CUSTOMER}
+            API_BILLING: ${API_BILLING}
+            SLOW_DELIVERY: ${SLOW_DELIVERY}
+            SLOW_DELIVERY_DELAY: ${SLOW_DELIVERY_DELAY}
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         command: bash -c "npm install && npm run start"
         networks:
         - restaurant-kata
@@ -106,12 +112,14 @@ services:
         image: node:16
         ports:
         - "8083:8083"
+        env_file:
+        -   ".env"
         healthcheck:
             test: curl -f http://localhost:8083/health || exit 1
-            interval: 60s
-            timeout: 10s
-            retries: 2
-            start_period: 30s
+            interval: ${HC_INTERVAL}
+            timeout: ${HC_TIMEOUT}
+            retries: ${HC_RETRIES}
+            start_period: ${HC_START_PERIOD}
         restart: unless-stopped
         volumes:
         - ./services/Billing:/services
@@ -120,11 +128,11 @@ services:
         - GuestExperience
         - RabbitMQ
         environment:
-            PORT: 8083
-            API_GUEST_EXPERIENCE: http://GuestExperience:8081
-            BUSY_THRESHOLD: 0.1
-            RABBITMQ_DEFAULT_USER: admin
-            RABBITMQ_DEFAULT_PASS: admin1234
+            PORT: ${BILLING_PORT}
+            API_GUEST_EXPERIENCE: ${API_GUEST_EXP}
+            BUSY_THRESHOLD: ${BUSY_THRESHOLD}
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         command: bash -c "npm install && npm run start"
         networks:
         - restaurant-kata
@@ -133,12 +141,14 @@ services:
         image: node:16
         ports:
         - "8082:8082"
+        env_file:
+        -   ".env"
         healthcheck:
             test: curl -f http://localhost:8082/health || exit 1
-            interval: 60s
-            timeout: 10s
-            retries: 2
-            start_period: 30s
+            interval: ${HC_INTERVAL}
+            timeout: ${HC_TIMEOUT}
+            retries: ${HC_RETRIES}
+            start_period: ${HC_START_PERIOD}
         restart: unless-stopped
         volumes:
         - ./services/TableService:/services
@@ -149,25 +159,27 @@ services:
         depends_on:
         - RabbitMQ
         environment:
-            PORT: 8082
-            API_DELIVERY: http://Delivery:8084
-            API_FOODPREPERATION: http://FoodPreparation:8085
-            FORGETTABLE WAITER_RATIO: 0.1
+            PORT: ${TABLE_SERVICE_PORT}
+            API_DELIVERY: ${API_DELIVERY}
+            API_FOODPREPERATION: ${API_FOOD_PREP}
+            FORGETTABLE_WAITER_RATIO: ${FORGETTABLE_WAITER_RATIO}
 
     RabbitMQ:
         image: rabbitmq:3.11-management-alpine
         environment:
-        - RABBITMQ_DEFAULT_USER=admin
-        - RABBITMQ_DEFAULT_PASS=admin1234
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         ports:
         - "5672:5672"
         - "15672:15672"
+        env_file:
+        -   ".env"
         healthcheck:
             test: rabbitmq-diagnostics -q ping || exit 1
-            interval: 30s
-            timeout: 10s
-            retries: 2
-            start_period: 30s
+            interval: ${HC_INTERVAL}
+            timeout: ${HC_TIMEOUT}
+            retries: ${HC_RETRIES}
+            start_period: ${HC_START_PERIOD}
         restart: unless-stopped
         volumes:
         - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
