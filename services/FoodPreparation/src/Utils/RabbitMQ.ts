@@ -1,4 +1,5 @@
 import amqp, { connect } from "amqplib";
+import { Log, LOG_TYPE } from "../Types/types";
 
 export default class RabbitMQ  {
     connection: amqp.Connection;
@@ -38,8 +39,26 @@ export default class RabbitMQ  {
             await channel.assertQueue(queueName, { durable: true });
             channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)));
             console.log(`${queueName}: Sent message: ${message}`);
+            console.log({
+                type: LOG_TYPE.INFO,
+                timestamp:Date.now(),
+                serviceName: "Food Preparation",
+                event: {
+                    method: "sent message " + queueName,
+                    message: "Message Sent to Queue: " + queueName + " with message: " + message
+                }
+            } as Log);
         } catch (error) {
             console.error("Error sending message:", error);
+            console.log({
+                type: LOG_TYPE.ERROR,
+                timestamp:Date.now(),
+                serviceName: "Food Preparation",
+                event: {
+                    method: "sent message " + queueName,
+                    message: "Error sending message:	" + error
+                }
+            } as Log);
         } finally {
             // await this.connection.close();
         }

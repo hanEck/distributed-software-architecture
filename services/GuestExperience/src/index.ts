@@ -2,7 +2,7 @@ import express = require("express");
 import { createMenu, getMenuItemPrices } from "./menu";
 import { delay } from "./utils";
 import amqp, { connect } from "amqplib";
-import { Menu } from "./types/types";
+import { Log, LOG_TYPE, Menu } from "./types/types";
 import * as os from "os";
 
 
@@ -12,112 +12,151 @@ const app = express();
 
 // service health check
 app.get("/health", (req, res) => {
-    const mem = os.freemem();
-    const cpu = os.loadavg()[0];
+	const mem = os.freemem();
+	const cpu = os.loadavg()[0];
 
-    if (mem < 100000000 || cpu > 5) {
-        console.warn("Guest Experience Service unhealthy");
-        return res.status(500).send({
-            message: "Guest Experience Service is unhealthy"
-        });
-    }
+	if (mem < 100000000 || cpu > 5) {
+		console.warn("Guest Experience Service unhealthy");
+		return res.status(500).send({
+			message: "Guest Experience Service is unhealthy"
+		});
+	}
 
-    return res.send({
-        message: "Guest Experience Service is healthy"
-    });
+	return res.send({
+		message: "Guest Experience Service is healthy"
+	});
 });
 
-let meals: { name: string; nutrition: string[]; }[];
+let meals: {name: string; nutrition: string[];}[];
 let connection: amqp.Connection;
 
 async function connectToRabbitMq() {
-    try {
-        const connection = await connect({
-            hostname: "RabbitMQ",
-            port: 5672,
-            username: process.env.RABBITMQ_DEFAULT_USER || "admin",
-            password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234"
-        });
-        console.log("Successfully connected to RabbitMQ");
-        return connection;
-    } catch (error) {
-        console.error("Error connecting to RabbitMQ:", error);
-    }
+	try {
+		const connection = await connect({
+			hostname: "RabbitMQ",
+			port: 5672,
+			username: process.env.RABBITMQ_DEFAULT_USER || "admin",
+			password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234"
+		});
+		console.log({
+			type: LOG_TYPE.INFO,
+			timestamp: Date.now(),
+			serviceName: "Guest Experience",
+			event: {
+				method: "connectToRabbitMq",
+				message: "Successfully connected to RabbitMQ"
+			}
+		} as Log);
+		return connection;
+	} catch (error) {
+		console.error("Error connecting to RabbitMQ:", error);
+		console.log({
+			type: LOG_TYPE.ERROR,
+			timestamp: Date.now(),
+			serviceName: "Guest Experience",
+			event: {
+				method: "connectToRabbitMq",
+				message: "Error connecting to RabbitMQ: " + error
+			}
+		} as Log);
+	}
 }
 
 async function sendMessage(connection: amqp.Connection, message: any) {
-    try {
-        const channel = await connection.createChannel();
-        const queue = "updatePrices";
-        console.log("Manager: " + message);
+	try {
+		const channel = await connection.createChannel();
+		const queue = "updatePrices";
+		console.log("Manager: " + message);
 
-        await channel.assertQueue(queue, { durable: true });
-        // @ts-ignore
-        channel.sendToQueue(queue, Buffer.from(message));
+		await channel.assertQueue(queue, { durable: true });
+		// @ts-ignore
+		channel.sendToQueue(queue, Buffer.from(message));
 
-        console.log(`Sent message: ${message}`);
-    } catch (error) {
-        console.error("Error sending message:", error);
-    }
+		console.log({
+			type: LOG_TYPE.INFO,
+			timestamp: Date.now(),
+			serviceName: "Guest Experience",
+			event: {
+				method: "sendMessage " + queue,
+				message: "Message Sent to Queue: " + queue + " with message: " + message
+			}
+		} as Log);
+	} catch (error) {
+		console.log({
+			type: LOG_TYPE.ERROR,
+			timestamp: Date.now(),
+			serviceName: "Guest Experience",
+			event: {
+				method: "sendMessage updatePrices",
+				message: "Error sending message: " + error
+			}
+		} as Log);
+	}
 }
 
 async function main() {
-    connection = await connectToRabbitMq();
-    getFood()
+	connection = await connectToRabbitMq();
+	getFood();
 
 }
 
 main().then(() => console.log("Sending test message successful!"));
 
 async function getFood() {
-    try {
-        const channel = await connection.createChannel();
-        await channel.assertQueue("updateFood", { durable: true });
-        channel.consume("updateFood", async (message) => {
-            meals = JSON.parse(message.content.toString());
-            createMenu(meals)
-            let prices = await getPrices();
-            await sendMessage(connection, JSON.stringify(prices));
-        })
-    } catch (error) {
-        console.error("Error sending message:", error);
-    }
+	try {
+		const channel = await connection.createChannel();
+		await channel.assertQueue("updateFood", { durable: true });
+		channel.consume("updateFood", async (message) => {
+			meals = JSON.parse(message.content.toString());
+			createMenu(meals);
+			let prices = await getPrices();
+			await sendMessage(connection, JSON.stringify(prices));
+		});
+	} catch (error) {
+		console.log({
+			type: LOG_TYPE.ERROR,
+			timestamp: Date.now(),
+			serviceName: "Guest Experience",
+			event: {
+				method: "getFood",
+				message: "Error receiving message: " + error
+			}
+		} as Log);
+	}
 
 }
 
 
 async function getPrices() {
-    // await getPossibleDelay();
-    const prices = await getMenuItemPrices()
+	// await getPossibleDelay();
+	const prices = await getMenuItemPrices();
 
-    if (!prices?.drinks?.length || !prices?.food?.length) {
-        console.log("No prices and no Food");
-    }
+	if (!prices?.drinks?.length || !prices?.food?.length) {
+		console.log("No prices and no Food");
+	}
 
-    return prices;
+	return prices;
 }
 
 app.get("/menu", async (req, res) => {
-    const menu = await sendMenu()
-    res.json(menu);
+	const menu = await sendMenu();
+	res.json(menu);
 
 });
 
 async function sendMenu(): Promise<Menu> {
-    if (meals != null) {
-        const menu = createMenu(meals)
-        console.log("Manager: " + menu);
-        return menu
-    }
-    else {
-        console.log("Menu is null");
-        await delay(100);
-        return await sendMenu()
-    }
+	if (meals != null) {
+		const menu = createMenu(meals);
+		return menu;
+	} else {
+		console.log("Menu is null");
+		await delay(100);
+		return await sendMenu();
+	}
 
 }
 
 
 app.listen(port, () => {
-    console.log(`Server running on port http://localhost:${port}`);
+	console.log(`Server running on port http://localhost:${port}`);
 });

@@ -28,12 +28,8 @@ app.get("/health", (req, res) => {
 app.post("/orders", async (req, res) => {
 	const order = req.body;
 
-	await processOrder(
-		order,
-		(responseData: {waitingTime: number; order: number}) => {
-			res.json(responseData);
-		}
-	);
+    const wait = await processOrder(order);
+    res.json(wait);
 });
 
 app.listen(port, () => {

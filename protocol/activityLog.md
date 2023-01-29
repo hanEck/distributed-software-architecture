@@ -2,26 +2,26 @@
 
 ## Team
 
-- Markus Fichtner
-- Hannes Eckelt
-- Tabea Schaeffer
-- Johannes Munker
-- Carolin Doht
+-   Markus Fichtner
+-   Hannes Eckelt
+-   Tabea Schaeffer
+-   Johannes Munker
+-   Carolin Doht
 
 ## Actors
 
-- Food Preparation (Markus)
-- Billing (Johannes)
-- Delivery (Hannes)
-- Table Service (Carolin)
-- Guest Experience (Tabea)
+-   Food Preparation (Markus)
+-   Billing (Johannes)
+-   Delivery (Hannes)
+-   Table Service (Carolin)
+-   Guest Experience (Tabea)
 
 ## Part 1: Building the system in a naive way
 
 ### Timetable
 
 | Date       | Activity Log                     |
-|------------|----------------------------------|
+| ---------- | -------------------------------- |
 | 2022-10-08 | Group creation, Define contracts |
 | 2022-10-11 | Defined openAPI specification    |
 | 2022-10-18 | Project planning meeting         |
@@ -30,17 +30,17 @@
 
 ### Log
 
-- Create Repository
-- Assign actors
-- Define contracts
-- Defined openAPI specification
-- Create APIs
-- Implemented business logic
-- merge all services into master
-- get docker running with all services
-- test communications between services
-- fix existing bugs and merge
-- final testing
+-   Create Repository
+-   Assign actors
+-   Define contracts
+-   Defined openAPI specification
+-   Create APIs
+-   Implemented business logic
+-   merge all services into master
+-   get docker running with all services
+-   test communications between services
+-   fix existing bugs and merge
+-   final testing
 
 ### Food preparation
 
@@ -55,7 +55,7 @@
 
 ###### Problems
 
-- Difficulty testing fetch functionality without running services
+-   Difficulty testing fetch functionality without running services
 
 ### Billing
 
@@ -101,8 +101,8 @@ adjustments and refactoring.
 
 ###### Problems
 
-- Changes in endpoint leaded to minor refactoring
-- There were a couple of challenges after all Services were merged
+-   Changes in endpoint leaded to minor refactoring
+-   There were a couple of challenges after all Services were merged
 
 ### Table Service
 
@@ -121,18 +121,18 @@ adjustments and refactoring.
 1. Defined endpoint for Prices in the OpenAPI Specification for Billing
 2. Implemented menu and prices endpoints in index.ts
 3. Implementation in menu.ts for receiving the menu Items from FoodPreparation
-5. Implementation for required functionality behind GuestExperience
-6. Refactoring of the code
-7. Final merge
+4. Implementation for required functionality behind GuestExperience
+5. Refactoring of the code
+6. Final merge
 
 ###### Problem
 
-- Testing the fetch without running services
+-   Testing the fetch without running services
 
 ### General Problems
 
-- testing fetch without docker running
-- http protocol was missing in the docker-compose file
+-   testing fetch without docker running
+-   http protocol was missing in the docker-compose file
 
 ---
 
@@ -141,22 +141,22 @@ adjustments and refactoring.
 ### Timetable
 
 | Date       | Activity Log                            |
-|------------|-----------------------------------------|
+| ---------- | --------------------------------------- |
 | 2022-11-21 | Testing fallacies + error documentation |
 | 2022-11-26 | Merge + Testing Meeting                 |
 | 2022-11-29 | Log optimization                        |
 
 ### Log
 
-- Individual implementation of fallacies per service
-- Merge of all fallacies into Master
-- Chaos testing
-- Write error documentation (refer to our [error log](errorDocumentation.md))
-- Individual fixing the errors with Design Patterns
-- Merge Patterns
-- Testing the system
-- Fixing Bugs
-- Final Merge and testing
+-   Individual implementation of fallacies per service
+-   Merge of all fallacies into Master
+-   Chaos testing
+-   Write error documentation (refer to our [error log](errorDocumentation.md))
+-   Individual fixing the errors with Design Patterns
+-   Merge Patterns
+-   Testing the system
+-   Fixing Bugs
+-   Final Merge and testing
 
 ### Food preparation
 
@@ -165,8 +165,8 @@ adjustments and refactoring.
 1. Implemented a fallacy to return a 505 status code with a predefined probability
 2. After testing all the occurring errors I started implementing the receiving part of the Idempotency pattern.
 
-- updated OpenApi Spec to include a request_id
-- store request_ids and implement check for duplicates
+-   updated OpenApi Spec to include a request_id
+-   store request_ids and implement check for duplicates
 
 3. Merge fallacy handling into master
 4. Testing the system
@@ -224,12 +224,12 @@ which does not quite meet the error message itself. I guess a solution would be 
 
 ###### Problems
 
-- For our surprise the implementation for the delayed TableService response also affected the DeliveryService. When the service was blocked send meals from Food preparation were not
-  matched in my DeliveryService. They were never send to the customer. This was fixed, by also blocking the messages coming from food preparation(When managers are smoking they
-  will also not directly take the meals coming from the kitchen.)
+-   For our surprise the implementation for the delayed TableService response also affected the DeliveryService. When the service was blocked send meals from Food preparation were not
+    matched in my DeliveryService. They were never send to the customer. This was fixed, by also blocking the messages coming from food preparation(When managers are smoking they
+    will also not directly take the meals coming from the kitchen.)
 
-- Issue with the data storage in the DeliveryService occurred. Because of the timeouts, the implementation to find orders within an Array was not working Properly(indices were
-  switched due to new incoming meals). This was fixed, by putting the item search out of the blocked service part
+-   Issue with the data storage in the DeliveryService occurred. Because of the timeouts, the implementation to find orders within an Array was not working Properly(indices were
+    switched due to new incoming meals). This was fixed, by putting the item search out of the blocked service part
 
 ### Table Service
 
@@ -264,9 +264,144 @@ which does not quite meet the error message itself. I guess a solution would be 
 
 ###### Problems
 
-- When merging the added patterns, the GuestId (which is created by GuestExperience) had stopped working properly --> solution: separation of create menu from get prices
+-   When merging the added patterns, the GuestId (which is created by GuestExperience) had stopped working properly --> solution: separation of create menu from get prices
 
 ### General Problems
+
 Unexpected errors occurred, that were not directly linked to a certain error we implemented. For example were causing two fallacies together a new error. Debugging was very hard in some cases because of that.
+
+---
+
+## Part III: Decoupling via Messages
+
+### Timetable
+
+| Date       | Activity Log                                 |
+| ---------- | -------------------------------------------- |
+| 2023-01-06 | including RabbitMQ                           |
+| 2023-01-07 | Defining contracts                           |
+| 2023-01-08 | Implementation of contracs                   |
+| 2023-01-09 | Created a diagram for the messaging topology |
+| 2023-01-11 | Merge + Testing Meeting                      |
+| 2023-01-12 | Testing Meeting                              |
+| 2023-01-13 | Testing and Bug Fixing Meeting               |
+
+### Log
+
+-   Including RabbitMQ
+-   Defining contracts
+-   Created a diagram for the messaging topology
+    -   ![Messaging Topology](./images/messaging-topology.png)
+-   Implementation of contracts with asyncapi
+-   Merge
+-   Fixing Bugs
+-   Testing the system
+-   Fixing Bugs
+-   Final Merge and testing
+-   Final testing and bug fixing
+
+### Food preparation
+
+###### Approach
+
+1. Created `RabbitMQ` singleton class for connection to RabbitMQ and sending and receiving messages
+2. removed Http Endpoints
+3. implemented eventListener for `placedOrder` Event
+
+-   old logic is used to handle Order logic
+-   instead of one food item per request the Event contains the entire order
+
+4. To return the waitingTime to TableService the `updateWaitingTime` command is sent
+5. `updateFood` Command is sent at the innitalization of the service
+6. once a orderItem is prepared `deliverFood` command is sent to Delivery
+7. Merge
+8. Fixing Bugs
+9. Testing
+
+###### Problems
+
+1. Removed BUSY COOK fallacy because request was removed for command
+
+### Billing
+
+###### Approach
+
+1. Created a `RabbitMQ` class for communication
+2. Use and initialize `RabbitMQ` class in `BillingService` class
+3. Changed `getMenu` function to `subscribeToMenu` function, which listens to "updatePrices" commands from GuestExperience
+4. Added the function `subscribeToDeliveries`, which listens to new delivery commands ("billDelivery") from Delivery
+5. Added `subscribeToMenu` and `subscribeToDeliveries` to constructor to start listening to commands
+6. Added Type Guards to check
+   the received data meets the expected type
+7. Removed unnecessary code like the "registerDelivery" endpoint, some error handling and the fallacy, which blocks deliveries since it doesn't make sense anymore
+8. Merging
+9. Small adjustments and fixes after merging
+10. Testing
+
+###### Problems
+
+-
+
+*   Changes in data structure, like "deliveryId" were not communicated directly -> it was in the header previously and was moved to the response body -> the code had to be adjusted twice
+*   getting the system running again was a little bit hard since fixes had to be done step by step
+
+### Delivery
+
+###### Approach
+
+1. After agreeing on contracts making own concept for implementation
+2. Implementing connection to `RabbitMQ`
+3. Creating subscription to event `placedOrder` of `Table service`
+4. Creating subscription to command `deliverFood` of `Food preparation`
+5. Refactoring RPC redundant code
+6. Defining command `billDelivery` to `Billing`
+7. Merge code and do testing
+8. Alling message properties
+9. Merge again
+10. Final testing
+
+###### Problems
+
+-Inconsistency in connection properties leaded to connection issues
+-Understanding differnence between `Exchange` and `Queue`
+-Implementing existing business logic with new way of communication
+
+### Table Service
+
+###### Approach
+
+1. Contract definition: I send an event to `Food Preperation` and `Delivery`
+2. Connected to RabbitMQ
+3. Implemented sent event `placedOrder` to `Delivery` and `Food Preperation`
+4. Created channel and listen to command `updateWaitingTime`
+5. Removed http endpoints
+6. Merging
+7. Testing
+8. Bug fixing and problem solving
+
+###### Problems
+
+-Calculating the waiting time lead to issues. The connection to `Food Preperation` has not arrived yet when `Table Service` is calculating the waiting time. Solution: For the first order `Table Service` knows how many food items are orderd and calculates the waiting time with this knowledge. In this time the connection with `Food Preperation` is established. After the first order the waiting time is updated by the received number of food items in the preperation queue from `Food Preperation`.
+
+### Guest Experience
+
+###### Approach
+
+1. Defining contracts between: `Billing` and `Food Preperation`, both are `Commands`
+2. get connection to RabbitMQ
+3. creating Channel to listen to command from `Food Preperation` to get the food which creats then the menu
+4. implemntation of sending the prices to `Billing` via `Command`
+5. removed Http Endpoints
+6. Merge all Services together
+7. Fixing the new problems that occurred after the merge
+8. Final merge and testing
+
+###### Problems
+
+-   Messages could only be tested after the merge with all services
+
+### General Problems
+
+-   Keeping all queue Names and options consistent
 
 ---
