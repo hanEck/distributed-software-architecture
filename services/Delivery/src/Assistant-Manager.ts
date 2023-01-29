@@ -1,4 +1,4 @@
-import { GuestWithOrder } from './interfaces';
+import { GuestWithOrder, Log, LOG_TYPE } from './interfaces';
 import fetch from "node-fetch";
 import amqp from "amqplib";
 
@@ -28,6 +28,16 @@ export default class AssistantManager {
             headers: { 'Content-Type': 'application/json' }
         }).catch(() => {
             console.log("Error: An issue occured by sending delivery to customer!");
+            console.log({
+                type: LOG_TYPE.WARN,
+                timestamp:Date.now(),
+                serviceName: "Billing",
+                event: {
+                    method: "post /guest/:guest/deliveries/:order",
+                    order: delivery.Order.order,
+                    message: "Error: An issue occured by sending delivery to customer!"
+                }
+            } as Log);
         })
 
         await this.registerDeliveryForBilling(delivery, deliveryBody.delivery, connection);
@@ -56,5 +66,14 @@ export default class AssistantManager {
             durable: true
         });
         channel.sendToQueue(queue, Buffer.from(message));
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "send message " + queue,
+                message: "Sent Message to Queue: " + queue + " with message: " + message
+            }
+        } as Log);
     }
 }

@@ -3,7 +3,7 @@ import { createMenu, getMenuItemPrices } from "./menu";
 import { delay, getPossibleDelay } from "./utils";
 import amqp, { connect } from "amqplib";
 import { Response } from "express-serve-static-core";
-import { Menu } from "./types/types";
+import { Log, LOG_TYPE, Menu } from "./types/types";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
@@ -19,10 +19,27 @@ async function connectToRabbitMq() {
             username: process.env.RABBITMQ_DEFAULT_USER || "admin",
             password: process.env.RABBITMQ_DEFAULT_PASS || "admin1234"
         });
-        console.log("Successfully connected to RabbitMQ");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Guest Experience",
+            event: {
+                method: "connectToRabbitMq",
+                message: "Successfully connected to RabbitMQ"
+            }
+        } as Log);
         return connection;
     } catch (error) {
         console.error("Error connecting to RabbitMQ:", error);
+        console.log({
+            type: LOG_TYPE.ERROR,
+            timestamp:Date.now(),
+            serviceName: "Guest Experience",
+            event: {
+                method: "connectToRabbitMq",
+                message: "Error connecting to RabbitMQ: " + error
+            }
+        } as Log);
     }
 }
 
@@ -36,9 +53,25 @@ async function sendMessage(connection: amqp.Connection, message: any) {
         // @ts-ignore
         channel.sendToQueue(queue, Buffer.from(message));
 
-        console.log(`Sent message: ${message}`);
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Guest Experience",
+            event: {
+                method: "sendMessage " + queue,
+                message: "Message Sent to Queue: " + queue + " with message: " + message
+            }
+        } as Log);
     } catch (error) {
-        console.error("Error sending message:", error);
+        console.log({
+            type: LOG_TYPE.ERROR,
+            timestamp:Date.now(),
+            serviceName: "Guest Experience",
+            event: {
+                method: "sendMessage updatePrices",
+                message: "Error sending message: " + error
+            }
+        } as Log);
     }
 }
 
@@ -61,7 +94,15 @@ async function getFood() {
             await sendMessage(connection, JSON.stringify(prices));
         })
     } catch (error) {
-        console.error("Error sending message:", error);
+        console.log({
+            type: LOG_TYPE.ERROR,
+            timestamp:Date.now(),
+            serviceName: "Guest Experience",
+            event: {
+                method: "getFood",
+                message: "Error receiving message: " + error
+            }
+        } as Log);
     }
 
 }
@@ -87,7 +128,6 @@ app.get("/menu", async (req, res) => {
 async function sendMenu(): Promise<Menu> {
     if (meals != null) {
         const menu = createMenu(meals)
-        console.log("Manager: " + menu);
         return menu
     }
     else {

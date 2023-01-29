@@ -1,6 +1,6 @@
 import express = require("express");
 import FoodPreparation from "./FoodPreperation";
-import { CookableMeal, OrderItem } from "./Types/types";
+import { CookableMeal, Log, LOG_TYPE, OrderItem } from "./Types/types";
 import Idempotency from "./Utils/Idempotency";
 import RabbitMQ from "./Utils/RabbitMQ";
 
@@ -26,21 +26,58 @@ broker.consumeEvent("placedOrder", (msg) => {
     const {food, order} = JSON.parse(msg.content.toString());  
     
     if(!food != null || order != null) {
-        console.log("Food Preparation: You tried to submit an empty order");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Food Preparation",
+            event: {
+                method: "received placedOrder Event",
+                order: order,
+                message: "Empty Order: You tried to submit an empty order"
+            }
+        } as Log);
     } else {
         if(idempotencyPattern.checkMessage(order)) {
             let ordersInQueue;
             food.forEach((id: number) => {      
                 ordersInQueue = foodPreparation.takeOrder(id,order);
                 if(!ordersInQueue) {
-                    console.log("Food Preparation: No Meal found under this id");
+                    console.log({
+                        type: LOG_TYPE.INFO,
+                        timestamp:Date.now(),
+                        serviceName: "Food Preparation",
+                        event: {
+                            method: "received placedOrder Event",
+                            order: order,
+                            message: "No Meal with ID: No Meal found under this id"
+                        }
+                    } as Log);
                 } else {
-                    console.log("Food Preparation: Order is in queue");
+                    console.log({
+                        type: LOG_TYPE.INFO,
+                        timestamp:Date.now(),
+                        serviceName: "Food Preparation",
+                        event: {
+                            method: "received placedOrder Event",
+                            order: order,
+                            message: "Order has been placed into queue"
+                        }
+                    } as Log);
                 }
             });
             broker.sendMessage("updateWaitingTime", ordersInQueue);
         } else {
-            console.log("Food Preparation: Order is already in queue");
+            
+            console.log({
+                type: LOG_TYPE.INFO,
+                timestamp:Date.now(),
+                serviceName: "Food Preparation",
+                event: {
+                    method: "received placedOrder Event",
+                    order: order,
+                    message: "Dublicate Order: Order has already been placed"
+                }
+            } as Log);
         }
     }
 });

@@ -1,5 +1,5 @@
 import express = require("express");
-import { BillPayment, ErrorMessage, GuestBill, GuestOrders, PaidBill, PAYMENT_METHOD } from "./types/types";
+import { BillPayment, ErrorMessage, GuestBill, GuestOrders, Log, LOG_TYPE, PaidBill, PAYMENT_METHOD } from "./types/types";
 import BillingService from "./billingService";
 
 const port = parseInt(process.env.PORT, 10) || 3000;
@@ -16,13 +16,29 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 
 	if (!guestId) {
 		res.status(400);
-		console.log("Cashier: The guest id was not provided so I don't know who the bill is for");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /bills/:guestId",
+                message: "Guest required: The guest id was not provided so I don't know who the bill is for"
+            }
+        } as Log);
 		return res.send("Guest was not provided");
 	}
 
 	if (!billingService?.menu?.drinks || !billingService?.menu?.food) {
 		res.status(404);
-		console.log("Cashier: I don't have the menu and can't calculate the total sum for the bill.");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /bills/:guestId",
+                message: "I don't have the menu and can't calculate the total sum for the bill."
+            }
+        } as Log);
 		return res.send("Sorry I don't have the menu. Please try again later.");
 	}
 
@@ -31,20 +47,53 @@ app.post<string, {guestId: string}, GuestBill | ErrorMessage>("/bills/:guestId",
 	if (!guestDelivery) {
 		res.status(404);
 		console.log("Cashier: I couldn't find the guest with the specified id");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /bills/:guestId",
+                message: "Guest not found: I couldn't find the guest with the specified id"
+            }
+        } as Log);
 		return res.send("Guest with the specified id has not been registered");
 	}
 
 	if (!guestDelivery.orders.length) {
 		res.status(404);
-		console.log("Cashier: There are no items that need to be paid");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /bills/:guestId",
+                message: "All Items paid: There are no items that need to be paid"
+            }
+        } as Log);
 		return res.send("No billable items found");
 	}
 
 	if (billingService.bills.find(bill => bill.guest === guestId)) {
-		console.log("Cashier: I'm updating a bill");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /bills/:guestId",
+                message: "Update Bill: I'm updating a bill"
+            }
+        } as Log);
 		res.status(202);
 	} else {
-		console.log("Cashier: I'm generating a bill");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /bills/:guestId",
+                message: "Generating Bill: I'm generating a bill"
+            }
+        } as Log);
 		res.status(200);
 	}
 
@@ -59,7 +108,15 @@ app.get<string, {billId: string}, PAYMENT_METHOD[] | ErrorMessage>("/payment/:bi
 
 	if (!billId) {
 		res.status(400);
-		console.log("Cashier: I can't find the bill if no id is provided");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "get /payment/:billId",
+                message: "Bill not found: I can't find the bill if no id is provided"
+            }
+        } as Log);
 		return res.send("Bill was not provided");
 	}
 
@@ -67,11 +124,27 @@ app.get<string, {billId: string}, PAYMENT_METHOD[] | ErrorMessage>("/payment/:bi
 
 	if (!bill) {
 		res.status(404);
-		console.log("Cashier: I couldn't find the bill");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "get /payment/:billId",
+                message: "Bill not found: Could not find the bill with the specified id"
+            }
+        } as Log);
 		return res.send("Bill was not found");
 	}
 
-	console.log("Cashier: I'm getting the payment options'");
+    console.log({
+        type: LOG_TYPE.INFO,
+        timestamp:Date.now(),
+        serviceName: "Billing",
+        event: {
+            method: "get /payment/:billId",
+            message: "Getting Payment options: I'm getting the payment options"
+        }
+    } as Log);
 	const paymentMethods = billingService.getPaymentOption(bill.totalSum);
 
 	res.status(200);
@@ -85,7 +158,15 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	if (!billId) {
 		res.status(400);
-		console.log("Cashier: I can't find the bill if no id is provided");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /payment/:billId",
+                message: "Bill not found: I can't find the bill if no id is provided"
+            }
+        } as Log);
 		return res.send("Bill was not provided");
 	}
 
@@ -93,7 +174,15 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	if (!bill) {
 		res.status(410);
-		console.log("Cashier: The requested bill is already paid");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /payment/:billId",
+                message: "Bill already paid: The requested bill is already paid"
+            }
+        } as Log);
 		return res.send("No payment for the bill required");
 	}
 
@@ -101,13 +190,30 @@ app.post<string, {billId: string}, PaidBill | ErrorMessage, BillPayment>("/payme
 
 	if (!possiblePaymentMethods.includes(billPayment.paymentMethod)) {
 		res.status(406);
-		console.log("Cashier: The used payment method isn't supported. Please try again.");
+        console.log({
+            type: LOG_TYPE.WARN,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /payment/:billId",
+                message: "Payment method not supported: The used payment method isn't supported. Please try again."
+            }
+        } as Log);
 		return res.send("Please use a supported payment method for this bill");
 	}
 
 	if (billPayment.amount < bill.totalSum) {
 		res.status(416);
 		console.log("Cashier: You didn't give me enough money to cover the bill");
+        console.log({
+            type: LOG_TYPE.INFO,
+            timestamp:Date.now(),
+            serviceName: "Billing",
+            event: {
+                method: "post /payment/:billId",
+                message: "Not enough money: The amount of money provided is not enough to cover the bill"
+            }
+        } as Log);
 		return res.send(`Please pay at least ${bill.totalSum} euros to cover this bill`);
 	}
 
